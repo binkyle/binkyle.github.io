@@ -1,6 +1,6 @@
 ---
 # 这是文章的标题
-title: vuepress启动
+title: 使用vuePress搭建博客并部署到gitpages上
 # 你可以自定义封面图片
 cover: /assets/images/cover1.jpg
 # 这是页面的图标
@@ -10,7 +10,7 @@ order: 1
 # 设置作者
 author: Ms.Hope
 # 设置写作时间
-date: 2020-01-01
+# date: 2020-01-01
 # 一个页面可以有多个分类
 category:
   - 使用指南
