@@ -1,11 +1,3 @@
-<!--
- * @Author: cxqd xb142857@outlook.com
- * @Date: 2023-11-02 17:35:58
- * @LastEditors: cxqd xb142857@outlook.com
- * @LastEditTime: 2023-11-02 17:40:01
- * @FilePath: \my-blog\src\demo\vuePressgit.md
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
--->
 ---
 # 这是文章的标题
 title: vuepress启动
