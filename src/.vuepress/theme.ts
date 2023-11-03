@@ -17,7 +17,7 @@ export default hopeTheme({
 
   logo: "/logo.jpg",
 
-  repo: "vuepress-theme-hope/vuepress-theme-hope",
+  repo: "binkyle/binkyle.github.io",
 
   docsDir: "src",
 

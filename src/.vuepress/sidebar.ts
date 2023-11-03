@@ -4,8 +4,8 @@ export default sidebar({
   "/": [
     "",
     {
-      text: "如何使用",
-      icon: "laptop-code",
+      text: "随笔",
+      icon: "blog",
       prefix: "blog/",
       link: "blog/",
       children: "structure",
@@ -17,6 +17,6 @@ export default sidebar({
       children: "structure",
     },
     "intro",
-    "slides",
+    // "slides",
   ],
 });

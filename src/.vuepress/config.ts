@@ -1,14 +1,18 @@
 import { defineUserConfig } from "vuepress";
 import theme from "./theme.js";
 import { searchProPlugin } from "vuepress-plugin-search-pro";
+import { hopeTheme } from "vuepress-theme-hope";
 export default defineUserConfig({
   base: "/",
   // repo: "/",
   lang: "zh-CN",
   title: "Bin",
   description: "Bin的小站",
-
+  
   theme,
+  // theme: hopeTheme({
+  //   repoDisplay: false,
+  // }),
 
   plugins: [
     searchProPlugin({
