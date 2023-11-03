@@ -1,6 +1,6 @@
 ---
 # 这是文章的标题
-title: 页面配置
+title: 页面配置23
 # 你可以自定义封面图片
 cover: /assets/images/cover1.jpg
 # 这是页面的图标
@@ -10,7 +10,7 @@ order: 1
 # 设置作者
 author: Ms.Hope
 # 设置写作时间
-date: 2020-01-45
+date: 2020-01-11
 # 一个页面可以有多个分类
 category:
   - 使用指南
@@ -59,7 +59,7 @@ copyright: 无版权
 
 ## 页面结构
 
-此页面应当包含:
+<!-- 此页面应当包含:
 
 - [路径导航](https://theme-hope.vuejs.press/zh/guide/layout/breadcrumb.html)
 - [标题和页面信息](https://theme-hope.vuejs.press/zh/guide/feature/page-info.html)
@@ -71,4 +71,4 @@ copyright: 无版权
 - [页脚](https://theme-hope.vuejs.press/zh/guide/layout/footer.html)
 - 返回顶部按钮
 
-你可以通过主题选项和页面 Frontmatter 自定义它们。
+你可以通过主题选项和页面 Frontmatter 自定义它们。 -->

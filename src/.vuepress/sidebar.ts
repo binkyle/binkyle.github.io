@@ -6,8 +6,8 @@ export default sidebar({
     {
       text: "如何使用",
       icon: "laptop-code",
-      prefix: "demo/",
-      link: "demo/",
+      prefix: "blog/",
+      link: "blog/",
       children: "structure",
     },
     {
