@@ -16,6 +16,7 @@ export default hopeTheme({
   iconAssets: "fontawesome-with-brands",
 
   logo: "/logo.jpg",
+  favicon: "/favicon.ico",
 
   repo: "binkyle/binkyle.github.io",
 
@@ -27,12 +28,12 @@ export default hopeTheme({
   // sidebar
   sidebar,
 
-  footer: "默认页脚",
+  footer: "灯火万家城四畔，星河一道水中央",
 
   displayFooter: true,
 
   blog: {
-    description: "一个软件开发者",
+    description: "代码的星辰在指尖舞动",
     intro: "/intro.html",
     medias: {
       // Baidu: "https://example.com",
@@ -87,10 +88,13 @@ export default hopeTheme({
     // install @waline/client before enabling it
     // WARNING: This is a test server for demo only.
     // You should create and use your own comment service in production.
-    // comment: {
-    //   provider: "Waline",
-    //   serverURL: "https://waline-comment.vuejs.press",
-    // },
+    comment: {
+      provider: "Giscus",
+      repo: "binkyle/binkyle.github.io",
+      repoId: "R_kgDOJCRNew", 
+      category: "Announcements",
+      categoryId: "DIC_kwDOJCRNe84CbHUf",
+    },
 
     // all features are enabled for demo, only preserve features you need here
     mdEnhance: {
@@ -135,9 +139,9 @@ export default hopeTheme({
       },
 
       // install reveal.js before enabling it
-      // revealJs: {
-      //   plugins: ["highlight", "math", "search", "notes", "zoom"],
-      // },
+      revealJs: {
+        plugins: ["highlight", "math", "search", "notes", "zoom"],
+      },
 
       stylize: [
         {

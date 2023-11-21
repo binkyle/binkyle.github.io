@@ -1,7 +1,7 @@
 import { defineUserConfig } from "vuepress";
 import theme from "./theme.js";
 import { searchProPlugin } from "vuepress-plugin-search-pro";
-import { hopeTheme } from "vuepress-theme-hope";
+// import { hopeTheme } from "vuepress-theme-hope";
 export default defineUserConfig({
   base: "/",
   // repo: "/",
