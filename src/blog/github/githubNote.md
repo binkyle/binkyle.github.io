@@ -19,7 +19,7 @@ tag:
   - github
   - 使用指南
 # 此页面会在文章列表置顶
-sticky: true
+# sticky: true
 # 此页面会出现在文章收藏中
 star: true
 isOriginal: true
@@ -38,7 +38,7 @@ timeline: true
 
 ### 设置代理
 ```shell
-git config --global https.proxy http://127.0.0.1:[Port]
+git config --global http.proxy http://127.0.0.1:[Port]
 git config --global https.proxy https://127.0.0.1:1080:[Port]
 ```
 ### 取消代理
@@ -73,3 +73,8 @@ git config --global --get http.proxy
 git config --global --get https.proxy
 ```
 发现global级别配置了代理地址，取消global级别的代理配置后，问题解决
+
+::: tip
+若有用，欢迎送个表情包或评论
+若有不对之处或建议，欢迎评论
+:::

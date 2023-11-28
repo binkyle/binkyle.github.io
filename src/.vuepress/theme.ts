@@ -83,6 +83,7 @@ export default hopeTheme({
   },
 
   plugins: {
+    copyright: true,
     blog: true,
 
     // install @waline/client before enabling it

@@ -19,7 +19,7 @@ tag:
   - VuePress
   - 使用指南
 # 此页面会在文章列表置顶
-sticky: true
+# sticky: true
 # 此页面会出现在文章收藏中
 star: true
 isOriginal: true
@@ -64,3 +64,7 @@ git remote add origin https://github.com/yourusername/myrepo.git
 ```sh
 git push origin <local_branch>:<remote_branch>
 ```
+::: tip
+若有用，欢迎送个表情包或评论
+若有不对之处或建议，欢迎评论
+:::
