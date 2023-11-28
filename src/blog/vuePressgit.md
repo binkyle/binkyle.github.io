@@ -65,6 +65,6 @@ git remote add origin https://github.com/yourusername/myrepo.git
 git push origin <local_branch>:<remote_branch>
 ```
 ::: tip
-若有用，欢迎送个表情包或评论
-若有不对之处或建议，欢迎评论
+若本文对您有用，欢迎送个表情包或评论
+;若有不对之处或建议，欢迎评论
 :::
