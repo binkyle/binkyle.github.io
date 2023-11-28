@@ -34,14 +34,14 @@ timeline: true
 本文主要介绍github system、global、local三个级别的代理配置及优先级
 
 <!-- more -->
-# 指令介绍
+## 指令介绍
 
-## 设置代理
+### 设置代理
 ```shell
 git config --global https.proxy http://127.0.0.1:[Port]
 git config --global https.proxy https://127.0.0.1:1080:[Port]
 ```
-## 取消代理
+### 取消代理
 ```shell
 git config --global --unset http.proxy
 git config --global --unset https.proxy
@@ -50,19 +50,23 @@ git config --global --unset https.proxy
 [Port]替换为你本地代理的端口
 --global 可替换为--system、--local
 :::
-# 生效优先级
+## 生效优先级
 system级指的是程序级别的配置，配置文件在程序的配置目录中
 global级是用户级别的配置，配置文件在用户目录中
 local级是仓库级别的配置，配置文件在仓库下的.git目录中
 ::: tip
 优先级：local > global > system
 :::
-# 案例
+## 案例
 
 在一个git脚本中当执行取消代理指令
+
 ![Alt text](image.png)
+
 遇到报错
+
 ![Alt text](image-1.png)
+
 通过执行代理查看指令
 ```shell
 git config --global --get http.proxy
