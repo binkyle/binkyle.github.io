@@ -1,0 +1,1 @@
+import{_ as e}from"./plugin-vue_export-helper-c27b6911.js";import{o,c as t,a as n,b as c}from"./app-1d338485.js";const r={},_=c("p",null,"venv in python",-1);function a(s,l){return o(),t("div",null,[_,n(" more ")])}const f=e(r,[["render",a],["__file","python_venv.html.vue"]]);export{f as default};
