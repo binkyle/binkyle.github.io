@@ -80,7 +80,7 @@ myenv\\Scripts\\activate
 
 ## 参考链接
 
-<https://docs.python.org/3/library/venv.html>
+https://docs.python.org/3/library/venv.html
 
 ::: tip
 若本文对您有用，欢迎送个表情包或评论
