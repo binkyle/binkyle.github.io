@@ -4,7 +4,7 @@ title: Python虚拟环境配置及其工作原理
 # 你可以自定义封面图片
 # cover: /assets/images/cover1.jpg
 # 这是页面的图标
-icon: file
+icon:file
 # 这是侧边栏的顺序
 order: 1
 # 设置作者
@@ -47,17 +47,17 @@ venv in python
 2. 打开命令提示符（CMD）或者PowerShell。
 3. 导航到你希望创建虚拟环境的目录。例如，如果你想在`C:\\Projects`目录下创建虚拟环境，可以使用以下命令：
     
-    ```
-    cd C:\\Projects
-    
-    ```
+```
+cd C:\\Projects
+
+```
     
 4. 创建虚拟环境。使用`python`命令和`m venv`参数，后面跟着虚拟环境的名称和Python解释器的路径。例如，如果你想创建一个名为`myenv`的虚拟环境，并使用Python 3.7版本，可以使用以下命令：
     
-    ```
-    python -m venv myenv
-    
-    ```
+```
+python -m venv myenv
+
+```
     
     如果你的系统上同时安装了多个版本的Python，你可以指定要使用的Python解释器的完整路径。例如：
     
