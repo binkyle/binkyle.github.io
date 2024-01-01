@@ -39,7 +39,7 @@ venv in python
 
 当Python解释器在虚拟环境中运行时，[sys.prefix](https://docs.python.org/3/library/sys.html#sys.prefix)和[sys.exec_prefix](https://docs.python.org/3/library/sys.html#sys.exec_prefix)指向虚拟环境的目录，而sys.prefix则指向虚拟环境的目录。[sys.base_prefix](https://docs.python.org/3/library/sys.html#sys.base_prefix)和 [sys.base_exec_prefix](https://docs.python.org/3/library/sys.html#sys.base_exec_prefix)指向用于创建环境的基本Python。检查sys.prefix != sys.base_prefix来确定当前解释器是否从虚拟环境中运行。
 
-虚拟环境可以使用其二进制目录(bin on POSIX; Scripts on Windows)。这将把该目录添加到您的PATH中，以便运行python将调用环境的python解释器，并且您可以运行已安装的脚本而不必使用它们的完整路径。激活脚本的调用是特定于平台的(<venv>必须被包含虚拟环境的目录的路径所替换)
+虚拟环境可以使用其二进制目录(bin on POSIX; Scripts on Windows)。这将把该目录添加到您的PATH中，以便运行python将调用环境的python解释器，并且您可以运行已安装的脚本而不必使用它们的完整路径。激活脚本的调用是特定于平台的(`<venv>`必须被包含虚拟环境的目录的路径所替换)
 
 ## 配置方法
 
@@ -83,7 +83,7 @@ myenv\\Scripts\\activate
 
 ## 参考链接
 
-<https://docs.python.org/3/library/venv.html>
+https://docs.python.org/3/library/venv.html
 
 ::: tip
 若本文对您有用，欢迎送个表情包或评论
