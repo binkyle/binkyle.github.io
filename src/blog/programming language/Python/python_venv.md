@@ -30,7 +30,9 @@ timeline: true
 # 你可以自定义版权信息
 # copyright: 无版权
 ---
+
 venv in python
+
 <!-- more -->
 ## 工作原理
 当Python解释器在虚拟环境中运行时，[sys.prefix](https://docs.python.org/3/library/sys.html#sys.prefix)和[sys.exec_prefix](https://docs.python.org/3/library/sys.html#sys.exec_prefix)指向虚拟环境的目录，而sys.prefix则指向虚拟环境的目录。[sys.base_prefix](https://docs.python.org/3/library/sys.html#sys.base_prefix)和 [sys.base_exec_prefix](https://docs.python.org/3/library/sys.html#sys.base_exec_prefix)指向用于创建环境的基本Python。检查sys.prefix != sys.base_prefix来确定当前解释器是否从虚拟环境中运行。
