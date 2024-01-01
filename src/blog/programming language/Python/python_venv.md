@@ -45,14 +45,16 @@ venv in python
 
 在Windows/Linux上，你可以使用Python的内置工具`venv`来创建指定版本的虚拟环境。以下以Window环境为例创建指定版本虚拟环境的步骤：
 
-1. 确保你已经安装了指定版本的Python解释器。你可以在Python官方网站（[https://www.python.org/downloads/windows/）上下载和安装所需的Python版本。](https://www.python.org/downloads/windows/%EF%BC%89%E4%B8%8A%E4%B8%8B%E8%BD%BD%E5%92%8C%E5%AE%89%E8%A3%85%E6%89%80%E9%9C%80%E7%9A%84Python%E7%89%88%E6%9C%AC%E3%80%82)
+1. 确保你已经安装了指定版本的Python解释器。[你可以在Python官方网站](https://www.python.org/downloads/windows/)上下载和安装所需的[Python版本](https://www.python.org/downloads/windows/%EF%BC%89%E4%B8%8A%E4%B8%8B%E8%BD%BD%E5%92%8C%E5%AE%89%E8%A3%85%E6%89%80%E9%9C%80%E7%9A%84Python%E7%89%88%E6%9C%AC%E3%80%82)
+
 2. 打开命令提示符（CMD）或者PowerShell。
+
 3. 导航到你希望创建虚拟环境的目录。例如，如果你想在`C:\\Projects`目录下创建虚拟环境，可以使用以下命令：
 
-```shell
-cd C:\\Projects
+  ```shell
+  cd C:\\Projects
 
-```
+  ```
 
 4. 创建虚拟环境。使用`python`命令和`m venv`参数，后面跟着虚拟环境的名称和Python解释器的路径。例如，如果你想创建一个名为`myenv`的虚拟环境，并使用Python 3.7版本，可以使用以下命令：
 
@@ -81,7 +83,7 @@ myenv\\Scripts\\activate
 
 ## 参考链接
 
-https://docs.python.org/3/library/venv.html
+<https://docs.python.org/3/library/venv.html>
 
 ::: tip
 若本文对您有用，欢迎送个表情包或评论
