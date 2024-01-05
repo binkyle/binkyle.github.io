@@ -1,0 +1,5 @@
+import{_ as e}from"./plugin-vue_export-helper-c27b6911.js";import{o as a,c as t,a as r,b as c,f as n}from"./app-fb9eb431.js";const i={},s=c("p",null,"本文主要汇总C/C++语法报错问题",-1),d=n(`<h2 id="在c-类中vector声明-报错-expected-parameter-declarator" tabindex="-1"><a class="header-anchor" href="#在c-类中vector声明-报错-expected-parameter-declarator" aria-hidden="true">#</a> 在C++类中vector声明，报错 “expected parameter declarator”</h2><div class="language-C line-numbers-mode" data-ext="C"><pre class="language-C"><code>class A{
+private:
+    vector&lt;int&gt; nums(5);
+};
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>错误原因是：编译器无法区分该语句是成员变量声明还是成员函数声明。</p><div class="hint-container tip"><p class="hint-container-title">提示</p><p>若本文对您有用，欢迎送个表情包或评论 ;若有不对之处或建议，欢迎评论</p></div>`,4);function l(o,_){return a(),t("div",null,[s,r(" more "),d])}const v=e(i,[["render",l],["__file","C_C__语法报错集合汇总.html.vue"]]);export{v as default};
