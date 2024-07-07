@@ -1,24 +1,23 @@
 {
-  "name": "my_blog",
+  "name": "blog",
   "version": "2.0.0",
-  "description": "daily blog",
-  "license": "LGPL",
+  "description": "群星闪耀之处",
+  "license": "CC BY-SA",
   "type": "module",
   "scripts": {
-    "docs:build": "vuepress build src",
-    "docs:clean-dev": "vuepress dev src --clean-cache",
-    "docs:dev": "vuepress dev src",
+    "docs:build": "vuepress-vite build src",
+    "docs:clean-dev": "vuepress-vite dev src --clean-cache",
+    "docs:dev": "vuepress-vite dev src",
     "docs:update-package": "pnpm dlx vp-update"
   },
   "devDependencies": {
-    "@vuepress/client": "2.0.0-beta.67",
-    "mathjax-full": "^3.2.2",
-    "reveal.js": "^5.0.2",
-    "vue": "^3.3.4",
-    "vuepress": "2.0.0-beta.67",
-    "vuepress-plugin-comment2": "2.0.0-rc.0",
-    "vuepress-plugin-search-pro": "2.0.0-beta.245",
-    "vuepress-plugin-seo2": "2.0.0-rc.1",
-    "vuepress-theme-hope": "2.0.0-beta.243"
+    "@vuepress/bundler-vite": "2.0.0-rc.14",
+    "vue": "^3.4.27",
+    "vuepress": "2.0.0-rc.14",
+    "vuepress-plugin-search-pro": "2.0.0-rc.50",
+    "vuepress-theme-hope": "2.0.0-rc.50"
+  },
+  "dependencies": {
+    "reveal.js": "^5.1.0"
   }
 }

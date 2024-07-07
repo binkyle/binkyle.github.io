@@ -4,12 +4,6 @@ export default navbar([
   "/",
   "/blog/",
   // {
-  //   text: "文章分类",
-  //   icon: "pen-to-square",
-  //   prefix: "/blog/",
-  //   children: [],   
-  // },
-  // {
   //   text: "博文",
   //   icon: "pen-to-square",
   //   prefix: "/posts/",
