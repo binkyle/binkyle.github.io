@@ -11,13 +11,14 @@
     "docs:update-package": "pnpm dlx vp-update"
   },
   "devDependencies": {
-    "@vuepress/bundler-vite": "2.0.0-rc.14",
-    "vue": "^3.4.27",
-    "vuepress": "2.0.0-rc.14",
-    "vuepress-plugin-search-pro": "2.0.0-rc.50",
-    "vuepress-theme-hope": "2.0.0-rc.50"
+    "@vuepress/bundler-vite": "2.0.0-rc.23",
+    "@vuepress/plugin-slimsearch": "2.0.0-rc.61",
+    "nodejieba": "^3.4.4",
+    "vue": "^3.5.15",
+    "vuepress": "2.0.0-rc.23",
+    "vuepress-theme-hope": "2.0.0-rc.88"
   },
   "dependencies": {
-    "reveal.js": "^5.1.0"
+    "reveal.js": "^5.2.1"
   }
 }
