@@ -6,8 +6,8 @@ export default defineUserConfig({
   base: "/",
 
   lang: "zh-CN",
-  title: "Bin",
-  description: "个人随记",
+  title: "孤星旅记",
+  description: "云间笔记",
 
   theme,
 

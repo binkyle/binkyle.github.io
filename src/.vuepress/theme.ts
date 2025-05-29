@@ -7,12 +7,11 @@ export default hopeTheme({
   hostname: "https://binkyle.github.io",
 
   author: {
-    name: "Bin",
+    name: "孤星旅记",
     url: "https://binkyle.github.io/",
   },
-  // iconAssets: "fontawesome-with-brands",
 
-  logo: "/logo.jpg",
+  logo: "/头像.png",
 
   repo: "binkyle/binkyle.github.io",
 
@@ -30,7 +29,7 @@ export default hopeTheme({
 
   // 博客相关
   blog: {
-    description: "新能源汽车从业者",
+    description: "一程星海，一程梦影",
     intro: "/intro.html",
     medias: {
       // Baidu: "https://example.com",
@@ -178,6 +177,7 @@ export default hopeTheme({
     },
 
     icon: {
+      assets: "iconify",
       prefix: "fa6-solid:",
     },
 

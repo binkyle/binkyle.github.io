@@ -4,10 +4,10 @@ layout: Blog
 icon: home
 title: 主页
 heroImage:
-heroText: Bin
+heroText: 星河逆旅
 heroFullScreen: true
-tagline: 不要忘记头顶的星空
-bgImage: /stars.jpg
+tagline: 在星光下，写下旅程的光芒
+bgImage: /背景.png
 projects:
   - icon: project
     name: 项目名称
