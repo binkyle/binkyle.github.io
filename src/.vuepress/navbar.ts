@@ -1,8 +1,11 @@
 import { navbar } from "vuepress-theme-hope";
 
 export default navbar([
-  "/",
-  "/blog/",
+  "/", //主页
+  "/技术笔记/",
+  "/生活随想/",
+  "/关于我/",
+
   // {
   //   text: "博文",
   //   icon: "pen-to-square",

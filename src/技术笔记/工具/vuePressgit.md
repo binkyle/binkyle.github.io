@@ -1,6 +1,6 @@
 ---
 # 这是文章的标题
-title: 使用vuePress搭建博客并部署到gitpages上
+title: 使用vuePress搭建博客
 # 你可以自定义封面图片
 cover: /assets/images/cover1.jpg
 # 这是页面的图标
@@ -64,7 +64,3 @@ git remote add origin https://github.com/yourusername/myrepo.git
 ```sh
 git push origin <local_branch>:<remote_branch>
 ```
-::: tip
-若本文对您有用，欢迎送个表情包或评论
-;若有不对之处或建议，欢迎评论
-:::
