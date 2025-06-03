@@ -85,7 +85,4 @@ myenv\\Scripts\\activate
 
 <https://docs.python.org/3/library/venv.html>
 
-::: tip
-若本文对您有用，欢迎送个表情包或评论
-;若有不对之处或建议，欢迎评论
-:::
+

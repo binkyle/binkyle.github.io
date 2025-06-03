@@ -152,7 +152,4 @@ int main() {
 
 参考链接：
 [Difference between Definition and Declaration - GeeksforGeeks](https://www.geeksforgeeks.org/difference-between-definition-and-declaration/)
-::: tip
-若本文对您有用，欢迎送个表情包或评论
-;若有不对之处或建议，欢迎评论
-:::
+

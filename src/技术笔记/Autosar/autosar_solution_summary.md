@@ -113,7 +113,4 @@ CP应用范围更广，AP与CP相辅相成，AP不会替代AP
 ### 参考链接
 [AUTOSAR_TR_FoundationReleaseOverview](https://www.autosar.org/fileadmin/standards/R20-11/FO/AUTOSAR_TR_FoundationReleaseOverview.pdf)
 AUTOSAR中国官方培训课程
-::: tip
-若本文对您有用，欢迎送个表情包或评论
-;若有不对之处或建议，欢迎评论
-:::
+

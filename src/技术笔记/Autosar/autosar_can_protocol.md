@@ -118,7 +118,4 @@ CAN总线上，信号表现为电压形式，通过CAN_H和CAN_L线上的电位�
 ### 参考链接
 [AUTOSAR_TR_FoundationReleaseOverview](https://www.autosar.org/fileadmin/standards/R20-11/FO/AUTOSAR_TR_FoundationReleaseOverview.pdf)
 AUTOSAR中国官方培训课程
-::: tip
-若本文对您有用，欢迎送个表情包或评论
-;若有不对之处或建议，欢迎评论
-:::
+
