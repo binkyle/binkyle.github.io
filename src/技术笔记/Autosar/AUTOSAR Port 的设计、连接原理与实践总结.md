@@ -43,6 +43,16 @@ Port 是软件组件（SWC）对外暴露的通信接口点，定义了该组件
 | Sender-Receiver | 周期数据、信号类 | 单向 |
 | Client-Server   | 服务调用、命令执行 | 双向，有响应 |
 
+### 3. 连接类型
+
+在 AUTOSAR 中，`CompositionSwComponentType` 支持三类 SwConnector 类型，每种对应不同连接语义：
+
+| Connector 类型           | 用途                                                | 涉及 SWC 实例 | AUTOSAR 定义        |
+|------------------------|---------------------------------------------------|--------------|--------------------|
+| `AssemblySwConnector`   | 用于连接两个 SWC 实例之间的 Port                          | ✅ 是         | TPS_SWCT_01082     |
+| `DelegationSwConnector` | 用于将 Composition 的外部 Port 映射到内部 SWC 的 Port       | ✅ 是         | TPS_SWCT_01083     |
+| `PassThroughSwConnector`| 在 Composition 内部将两个外部 Port 直接相连，不经过 SWC 实例 | ❌ 否         | TPS_SWCT_01507     |
+
 ---
 
 ## 三、连接方式解析
@@ -81,8 +91,7 @@ Port 是软件组件（SWC）对外暴露的通信接口点，定义了该组件
 
 ### ✅ 正确做法
 
-* 将 SenderPort 拆分为两个独立端口；
-* 或在 Composition 使用 PR-Port。
+* 将 SenderPort 拆分为两个独立端口
 
 ---
 
@@ -190,6 +199,7 @@ SWC_TempSensor   → temp
 ## 十、结语
 
 AUTOSAR Port 不只是通信通道，它是组件建模、架构清晰与系统稳定的基础。在项目建模初期，保持 Port 连接职责单一、遵循连接规则，能极大提高系统的可维护性和工具链兼容性。
+
 ---
 
 
