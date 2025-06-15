@@ -38,7 +38,7 @@ export default hopeTheme({
       // Dingding: "https://example.com",
       // Discord: "https://example.com",
       // Dribbble: "https://example.com",
-      Email: "xb142857@163.com",
+      Email: "xb142857@outlook.com",
       // Evernote: "https://example.com",
       // Facebook: "https://example.com",
       // Flipboard: "https://example.com",
