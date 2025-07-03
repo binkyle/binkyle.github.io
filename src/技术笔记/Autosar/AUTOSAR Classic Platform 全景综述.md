@@ -1,11 +1,14 @@
 ---
 title: AUTOSAR Classic Platform 全景综述
 date: 2025-07-03
+order: 1
+isOriginal: true
+article: true
+timeline: true
 categories:
   - AUTOSAR
   - 嵌入式系统
   - 汽车软件架构
-
 tags:
   - Classic Platform
   - RTE

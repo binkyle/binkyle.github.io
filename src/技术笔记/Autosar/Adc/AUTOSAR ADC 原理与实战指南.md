@@ -1,6 +1,10 @@
 ---
 title: AUTOSAR ADC 原理与实战指南
 date: 2025-07-01
+order: 1
+isOriginal: true
+article: true
+timeline: true
 categories:
   - AUTOSAR
   - 嵌入式开发
