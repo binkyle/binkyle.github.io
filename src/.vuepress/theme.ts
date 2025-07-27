@@ -91,6 +91,7 @@ export default hopeTheme({
   // 此处开启了很多功能用于演示，你应仅保留用到的功能。
   markdown: {
       //绘图
+    chartjs: true,
     mermaid: true,
     align: true,
     attrs: true,
@@ -125,12 +126,12 @@ export default hopeTheme({
     vPre: true,
 
     // 取消注释它们如果你需要 TeX 支持
-    // math: {
-    //   // 启用前安装 katex
-    //   type: "katex",
-    //   // 或者安装 mathjax-full
-    //   type: "mathjax",
-    // },
+    math: {
+      // 启用前安装 katex
+      // type: "katex",
+      // 或者安装 mathjax-full
+      type: "mathjax",
+    },
 
     // 如果你需要幻灯片，安装 @vuepress/plugin-revealjs 并取消下方注释
     // revealjs: {
