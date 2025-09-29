@@ -23,25 +23,6 @@ tag:
   - 1722Tp
   - Vector DaVinci
   - Wireshark
-sticky: 1
-star: true
-lastUpdated: true
-editLink: true
-toc: true
-outline: deep
-permalink: /autosar/ethernet/avtp-can-over-avtp/
-mermaid: true
-echarts: true
-chart: true
-katex: true
-flowchart: true
-keywords:
-  - AVTP
-  - CAN over AVTP
-  - IEEE 1722
-  - TSN
-  - AUTOSAR 1722Tp
-  - AVB
 ---
 
 # 车载以太网中 AVTP 与 CAN over AVTP 技术详解
