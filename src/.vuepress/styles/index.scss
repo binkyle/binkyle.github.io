@@ -1,1 +1,41 @@
-// place your custom styles here
+﻿:root {
+  --category-grid-gap: clamp(1rem, 2.4vw, 1.8rem);
+  --category-card-shadow: 0 24px 48px -36px rgba(15, 23, 42, 0.35);
+}
+
+.category-grid {
+  display: grid;
+  gap: var(--category-grid-gap);
+  margin: 2.5rem 0 3.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.category-grid .vp-card {
+  height: 100%;
+  border-radius: 18px;
+  backdrop-filter: blur(12px);
+  box-shadow: var(--category-card-shadow);
+  transition: transform 0.25s ease, box-shadow 0.3s ease;
+}
+
+.category-grid .vp-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 34px 72px -40px rgba(15, 23, 42, 0.42);
+}
+
+.category-grid .vp-card__title {
+  font-size: 1.12rem;
+  font-weight: 600;
+}
+
+.category-grid .vp-card__desc {
+  line-height: 1.7;
+  color: var(--vp-c-text-mute);
+}
+
+@media (max-width: 640px) {
+  .category-grid {
+    margin: 1.5rem 0 2.5rem;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

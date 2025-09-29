@@ -1,55 +1,38 @@
-import { navbar } from "vuepress-theme-hope";
+﻿import { navbar } from "vuepress-theme-hope";
 
 export default navbar([
-  "/", //主页
-  "/技术笔记/",
-  "/生活随想/",
-  "/关于我/",
-
-  // {
-  //   text: "博文",
-  //   icon: "pen-to-square",
-  //   prefix: "/posts/",
-  //   children: [
-  //     {
-  //       text: "苹果",
-  //       icon: "pen-to-square",
-  //       prefix: "apple/",
-  //       children: [
-  //         { text: "苹果1", icon: "pen-to-square", link: "1" },
-  //         { text: "苹果2", icon: "pen-to-square", link: "2" },
-  //         "3",
-  //         "4",
-  //       ],
-  //     },
-  //     {
-  //       text: "香蕉",
-  //       icon: "pen-to-square",
-  //       prefix: "banana/",
-  //       children: [
-  //         {
-  //           text: "香蕉 1",
-  //           icon: "pen-to-square",
-  //           link: "1",
-  //         },
-  //         {
-  //           text: "香蕉 2",
-  //           icon: "pen-to-square",
-  //           link: "2",
-  //         },
-  //         "3",
-  //         "4",
-  //       ],
-  //     },
-  //     { text: "樱桃", icon: "pen-to-square", link: "cherry" },
-  //     { text: "火龙果", icon: "pen-to-square", link: "dragonfruit" },
-  //     "tomato",
-  //     "strawberry",
-  //   ],
-  // },
-  // {
-  //   text: "V2 文档",
-  //   icon: "book",
-  //   link: "https://theme-hope.vuejs.press/zh/",
-  // },
+  {
+    text: "首页",
+    icon: "fa6-solid:house",
+    link: "/",
+  },
+  {
+    text: "技术笔记",
+    icon: "fa6-solid:laptop-code",
+    prefix: "/技术笔记/",
+    children: [
+      { text: "AUTOSAR", icon: "fa6-solid:car-side", link: "Autosar/" },
+      { text: "嵌入式系统", icon: "fa6-solid:microchip", link: "嵌入式系统/" },
+      { text: "算法", icon: "fa6-solid:square-root-variable", link: "算法/" },
+      { text: "人工智能", icon: "fa6-solid:robot", link: "人工智能/" },
+      { text: "工具", icon: "fa6-solid:screwdriver-wrench", link: "工具/" },
+      { text: "编程语言", icon: "fa6-solid:code", link: "编程语言/" },
+      { text: "设计模式", icon: "fa6-solid:diagram-project", link: "设计模式/" },
+    ],
+  },
+  {
+    text: "生活随想",
+    icon: "fa6-solid:feather-pointed",
+    link: "/生活随想/",
+  },
+  {
+    text: "时间线",
+    icon: "fa6-solid:calendar-days",
+    link: "/timeline/",
+  },
+  {
+    text: "关于我",
+    icon: "fa6-solid:user-astronaut",
+    link: "/关于我/",
+  },
 ]);
