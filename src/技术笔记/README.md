@@ -27,7 +27,7 @@ index: false
   />
   <VPCard
     title="人工智能"
-    icon="fa6-solid:robot"
+    icon="carbon:machine-learning-model"
     desc="机器学习、深度学习与部署实践。"
     link="/技术笔记/人工智能/"
   />

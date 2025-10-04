@@ -25,7 +25,7 @@ export default sidebar({
     },
     {
       text: "人工智能",
-      icon: "fa6-solid:robot",
+      icon: "fa6-solid:brain",
       prefix: "人工智能/",
       collapsible: true,
       children: "structure",
@@ -48,6 +48,13 @@ export default sidebar({
       text: "设计模式",
       icon: "fa6-solid:diagram-project",
       prefix: "设计模式/",
+      collapsible: true,
+      children: "structure",
+    },
+    {
+      text: "机器人",
+      icon: "fa6-solid:robot",
+      prefix: "机器人/",
       collapsible: true,
       children: "structure",
     },
