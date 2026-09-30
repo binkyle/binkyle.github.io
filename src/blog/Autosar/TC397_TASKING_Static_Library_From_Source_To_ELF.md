@@ -15,1079 +15,687 @@ article: true
 timeline: true
 ---
 
-在嵌入式工程里，我们经常会接触两类静态库：
+在嵌入式工程里，经常会遇到两种静态库场景：
 
-- **自己生产的库**：把工程源码编译成 `.a`，交给第三方集成；
-- **别人交付的库**：拿到供应商的 `.a`，再链接进自己的 ECU 工程。
+- **作为 Producer**：把自己的源码编译成 `.a`，交给其他团队或第三方集成；
+- **作为 Consumer**：拿到供应商提供的 `.a`，再链接进自己的 ECU 工程。
 
-这两件事表面上都是“用静态库”，本质却处在构建链的两端。
+两种场景其实是同一条构建链的两端。
 
-本文基于一个 **Infineon TC397 + TASKING TriCore v6.3r1 + AUTOSAR Classic** 的真实工程取证，以工程自身生成的 **`libAdc.a`** 为 Producer 主案例，完整走一遍：
+本文结合 **TC397 + TASKING + AUTOSAR Classic** 工程，完整梳理：
 
 ```text
 .c
  │
- │ TASKING cctc
+ │ Compile
  ▼
-relocatable .o
+.o
  │
- │ TASKING artc
+ │ Archive
  ▼
-libAdc.a
+.a
  │
- │ TASKING ltc
+ │ Link
  ▼
 ELF
  │
  ▼
-HEX
+HEX / ECU
 ```
 
-并在最后用第三方的 `libDrApp.a` 做 Consumer 侧对照。
+重点不是某一个具体库，而是理解 **Compile、Archive、Link** 三个阶段分别做了什么，以及一个嵌入式静态库真正要能够被第三方使用，需要满足哪些条件。
 
 <!-- more -->
 
-## 1. 先建立正确模型：Compile、Archive、Link 是三件事
+## 1. Compile、Archive、Link 是三件不同的事
 
-很多人第一次接触静态库时，会把“编译库”理解成一个步骤：
+很多人第一次接触静态库时，会把“编译一个库”理解成：
 
 ```text
 源码 → libxxx.a
 ```
 
-真实过程至少应该拆成：
+实际过程应该拆成：
 
 ```text
 Source
   │
-  │ Compile
+  │ Compiler
   ▼
-Object
+Relocatable Object
   │
-  │ Archive
+  │ Archiver
   ▼
 Static Library
   │
-  │ Link
+  │ Linker
   ▼
 Executable Image
 ```
 
-在当前工程中，对应工具分别是：
+在 TASKING TriCore 工具链中，可以对应为：
 
-| 阶段 | TASKING 工具 | 主要职责 |
+| 阶段 | 工具 | 作用 |
 |---|---|---|
-| Compile | `cctc` | C 源码编译，生成可重定位目标文件 |
-| Assemble | `astc` | TriCore 汇编器；显式 `.s` 规则直接使用 |
-| Archive | `artc` | 把大量 `.o` 组织成静态归档 `.a` |
-| Link | `ltc` | 抽取成员、解析符号、重定位、执行 LSL 放置并生成 ELF |
+| Compile | `cctc` | 将 C 源文件编译成可重定位目标文件 |
+| Assemble | `astc` | 将 TriCore 汇编源编译成目标文件 |
+| Archive | `artc` | 将多个 `.o` 组织成静态库 `.a` |
+| Link | `ltc` | 解析符号、重定位、执行 LSL 放置并生成 ELF |
 
-工程中的工具链版本为：
-
-```text
-TASKING VX-toolset for TriCore v6.3r1
-Target: tc39xb
-Core:   tc1.6.2
-```
-
-目标 MCU 为 TC397 / TC39x。
+因此，静态库并不是“编译完成的程序”，而是 **Link 之前的一种中间交付形态**。
 
 ---
 
-## 2. Stage 1：源码如何变成 `.o`
+## 2. Stage 1：从 `.c` 到 `.o`
 
-### 2.1 编译入口是 `cctc`
-
-工程 Makefile 中：
-
-```makefile
-CC = cctc
-```
-
-并针对 TC39x 使用：
+以一个普通模块为例：
 
 ```text
--Ctc39xb
---core=tc1.6.2
+Module.c
+   │
+   │ cctc
+   ▼
+Module.o
 ```
 
-例如一个真实编译单元：
+对 C 源文件而言，`cctc` 作为 compiler driver，内部完成预处理、代码生成以及汇编等步骤。
+
+可以概念化为：
 
 ```text
-Adc.c
+Module.c
+   │
+   ├─ preprocessing
+   ├─ compilation / code generation
+   └─ assembly
+   ▼
+Module.o
 ```
 
-最终生成：
+需要注意的是，`astc` 是 TriCore 汇编器，但并不是：
 
 ```text
-Adc.o
+.c → .o → astc → 再生成一个 .o
 ```
 
-从工具职责上，真实模型更准确地写成：
+对于独立的 `.s` 汇编文件，构建系统才会显式走汇编规则。
 
-```text
-Adc.c
-  │
-  │ cctc compiler driver
-  │
-  ├─ preprocessing
-  ├─ C compilation / code generation
-  └─ assembly
-  ▼
-Adc.o
-```
+### 编译阶段已经固定了什么？
 
-也就是说，不应该理解成：
+当源码变成 `.o` 时，很多关键属性其实已经确定，例如：
 
-```text
-.c → .o → astc → 又一个 .o
-```
-
-`astc` 是实际汇编工具，但对 C 文件，工程侧主要由 `cctc` 作为 driver 驱动完整流程；只有独立汇编源 `.s` 才在 MakeSupport 中看到显式 `astc` 规则。
-
-### 2.2 编译阶段已经固定了很多东西
-
-当前工程关键编译选项包括：
-
-```text
---fp-model=2
---align=4
---default-near-size=0
---default-faraccess=call,xy
---use-address-registers=a10,a11
---no-clear
--O2
---iso=99
---language=-gcc,+volatile,+typeof
---exceptions
---c++-style-comments
---char-is-signed
---enum-size=int
-```
-
-这些参数很重要，因为一个静态库在变成 `.o` 时，就已经固定了一大批 ABI 和代码生成属性，例如：
-
-- TriCore 指令集；
+- 目标 CPU / TriCore ISA；
 - calling convention；
-- 枚举表示；
-- 对齐规则；
+- 数据对齐；
+- enum 表示方式；
 - 浮点模型；
-- 符号命名；
+- C/C++ ABI；
+- 符号名称；
 - section 名；
-- near/far 等地址模型相关属性。
+- 部分 memory model。
 
-所以：
+所以即使两个库都声称支持 TC397，也不能简单认为它们一定兼容。
 
-> **同样都是 TC397，并不意味着任意编译器、任意参数生成的库都天然兼容。**
-
-真正能否安全集成，还要看 ABI 和运行环境是否匹配。
+> **CPU 相同只是第一层条件，真正决定二进制能否互相调用的是 ABI。**
 
 ---
 
 ## 3. 一个 `.o` 里到底有什么？
 
-从 `libAdc.a` 中取出真实成员，对 `Adc.o`、`CanServer.o` 等执行 TASKING `elfdump`，可以看到三个很关键的事实。
+`.o` 可以理解成：
 
-### 3.1 它已经有 Defined Symbol
+> **已经生成机器代码，但还没有决定最终运行地址的可重定位模块。**
 
-例如：
+一个典型 Object 中会包含：
 
-```text
-Adc_Init
-```
-
-已经是：
-
-```text
-GLOBAL FUNC
-```
-
-也就是：
-
-> 这个 Object 已经知道“我实现了哪些函数”。
-
-### 3.2 它同时可以保留 Undefined Symbol
+### 3.1 Defined Symbol
 
 例如：
 
 ```text
-Mcal_xxx
-Rte_xxx
-__d_xxx
+App_Init
+App_MainFunction
 ```
 
-仍然可以处于：
+表示这些函数由当前 Object 提供。
+
+### 3.2 Undefined Symbol
+
+例如：
 
 ```text
-GLOBAL UND
+Rte_Read_xxx
+Platform_GetTime
+memcpy
 ```
 
-这并不代表编译失败。
+表示当前 Object 使用了这些符号，但定义来自其他模块或库。
 
-Object 文件允许说：
+Undefined Symbol 并不意味着编译失败。
 
-> “我需要这个符号，但当前编译单元不负责实现它，留到以后链接时再找。”
+它表达的是：
 
-### 3.3 它还保留 Relocation
+> “我需要这个函数，但现在还不知道它最终来自哪里，留到 Link 阶段解决。”
 
-`.o` 中存在 `.rela.*` 等 relocation 信息。
+### 3.3 Relocation
 
-这说明此时：
+Object 中还会保存 relocation 信息。
+
+因此此时：
 
 ```text
-函数在哪里？
-全局变量在哪里？
-外部符号最终地址是多少？
+函数最终在哪个 Flash 地址？
+全局变量最终在哪块 RAM？
+外部函数最终地址是多少？
 ```
 
-都还没有最终决定。
-
-因此可以把 `.o` 理解成：
-
-> **已经生成机器代码，但仍然可以搬家、仍然等待外部符号解析的可重定位模块。**
+都还没有确定。
 
 ---
 
-## 4. Section 名在什么时候产生？
+## 4. Section 是编译阶段和链接阶段之间的契约
 
-这是嵌入式库与普通 PC Library 很不一样的地方。
-
-在实际 Object 中可以看到类似：
+AUTOSAR 工程里经常会看到：
 
 ```text
-.text.MSR_CODE
-.rodata.MSR_PBCONST
-.bss.MSR_VAR_CLEARED
-.bss.bss_lmu1_core0
-.bss.OS_CORE0_VAR_CLEARED
+.text.xxx
+.rodata.xxx
+.data.xxx
+.bss.xxx
 ```
 
-这些名字并不是 Linker 最后临时发明出来的。
+或者更具体的核、本地 RAM、共享 RAM 等 section。
 
-工程通过 MemMap / `#pragma section` 等机制，在**编译阶段**就把函数和变量归入特定 section。
+这些 section 名通常通过：
 
-流程可以理解为：
+- MemMap；
+- `#pragma section`；
+- compiler attribute；
+
+在 **Compile 阶段**写进 Object。
+
+流程是：
 
 ```text
-变量 / 函数
+函数 / 变量
    │
    │ MemMap / pragma
    ▼
 Section Name
    │
-   │ 编译进 .o
    ▼
-.text.xxx / .data.xxx / .bss.xxx
-```
-
-真正到 Link 阶段，LSL 做的是：
-
-```text
-Section Name
-   ↓
-Memory Region
-   ↓
-最终地址
-```
-
-也就是说：
-
-> **Compiler 决定“属于哪一类 Section”，Linker 决定“这个 Section 最后放到哪”。**
-
----
-
-## 5. Stage 2：为什么工程要生成 `libAdc.a`
-
-当前工程存在一个很关键的构建开关：
-
-```text
-RELEASE_FLAG
-```
-
-取证发现，Release 模式不是简单地“再生成一个库文件”，而是存在 **Source Mode → Library Mode** 的切换机制。
-
-在相关 Global Makefile 中：
-
-- 某些对象 / library path / include dir 会被重新整理；
-- Release 路径下会生成 `libAdc.a`；
-- 随后最终工程通过 `-lAdc` 再消费这个库。
-
-这形成了一条很有价值的自验证链：
-
-```text
-工程源码
-   ↓
-编译
-   ↓
-Object
-   ↓
-libAdc.a
-   ↓
-同一工程 Release Link
-   ↓
-ELF
-```
-
-因此 `libAdc.a` 并不是一个抽象概念，它正是工程提供给外部集成者时可以使用的二进制交付形态。
-
----
-
-## 6. 719 个 Object 如何变成一个 `libAdc.a`
-
-### 6.1 先生成成员列表
-
-取证得到：
-
-```text
-libAdc_objs.rsp
-```
-
-最终参与归档的 Object 数量为：
-
-```text
-719
-```
-
-随后形成供 Archiver 使用的 response file。
-
-### 6.2 真正的归档命令
-
-工程确认：
-
-```makefile
-AR = artc
-ARFLAGS = -cr
-```
-
-实际规则等价于：
-
-```text
-删除旧 libAdc.a
-        ↓
-artc -cr libAdc.a -f libAdc.rsp
-```
-
-这里“先删旧文件”很重要。
-
-它避免旧 archive member 因增量更新而意外残留，使本次 `libAdc.a` 的成员集合完全由新的 response file 决定。
-
-最终生成：
-
-```text
-libAdc.a
-size ≈ 134,003,004 bytes
-```
-
----
-
-## 7. `.a` 本质上是什么？
-
-对 `libAdc.a` 检查后：
-
-```text
-magic = !<arch>
-members = 719
-```
-
-使用：
-
-```bash
-artc -t libAdc.a
-```
-
-可以直接列出归档成员，其中包含真实的：
-
-```text
-Adc.o
-...
-```
-
-因此一个静态库可以非常直观地理解为：
-
-```text
-libAdc.a
-├── Object_A.o
-├── Object_B.o
-├── Adc.o
-├── CanServer.o
-├── ...
-└── Archive Symbol Index
-```
-
-它不是已经完成最终地址分配的“半个 ELF”。
-
-更准确地说，它是：
-
-> **一组 relocatable Object + 用于快速检索符号的 Archive Index。**
-
----
-
-## 8. Archive 不负责解决符号
-
-这是整个静态库机制里最重要的概念之一。
-
-`libAdc.a` 中聚合得到的 Undefined Symbol 数量为：
-
-```text
-17146
-```
-
-进一步分析：
-
-```text
-16707
-```
-
-可以在库内部其它 Object 中找到定义。
-
-剩余真正需要最终 Consumer 提供的外部符号约：
-
-```text
-439
-```
-
-包括：
-
-- LSL 边界符号；
-- TASKING 浮点运行时中的 `__d_*`；
-- TASKING runtime 中的 `__ll_*`；
-- 以及其它平台侧依赖。
-
-这说明：
-
-```text
-artc
-```
-
-在创建 `libAdc.a` 时并不会要求：
-
-> “所有 Undefined Symbol 必须全部解决。”
-
-它只负责：
-
-```text
 .o
- +
-.o
- +
-.o
+```
+
+而最终：
+
+```text
+Section
    ↓
-Archive
-```
-
-真正的 Symbol Resolution 要留给最终 Link。
-
----
-
-## 9. Archive 阶段到底做了什么、没做什么？
-
-可以用一张表概括：
-
-| 行为 | Compile | Archive | Link |
-|---|---:|---:|---:|
-| C → Machine Code | ✅ | ❌ | ❌ |
-| 生成 Section | ✅ | ❌ | ❌ |
-| 生成 Symbol | ✅ | ❌ | ❌ |
-| 保存 Relocation | ✅ | 保留 | 处理 |
-| 打包多个 Object | ❌ | ✅ | ❌ |
-| 建立 Archive Index | ❌ | ✅ | 使用 |
-| 解析外部符号 | ❌ | ❌ | ✅ |
-| 决定最终地址 | ❌ | ❌ | ✅ |
-| 执行 LSL Placement | ❌ | ❌ | ✅ |
-| 生成 ELF | ❌ | ❌ | ✅ |
-
-所以：
-
-> **Archive 基本不改变 Object 的二进制语义，它主要负责组织与索引。**
-
----
-
-## 10. 为什么 134 MB 的 `.a` 不代表 134 MB Flash？
-
-这是工程中非常容易误判的问题。
-
-`libAdc.a` 包含：
-
-- 真正会进入 ECU 的代码/常量/数据；
-- Symbol Table；
-- String Table；
-- Relocation；
-- TASKING metadata；
-- DWARF Debug Information；
-- Archive Index；
-- Object 元数据。
-
-因此：
-
-```text
-libAdc.a file size
-≠
-Flash usage
-```
-
-甚至：
-
-```text
-ELF file size
-≠
-Flash usage
-```
-
-最终 Flash / RAM 占用应该看：
-
-- Link Map；
-- ALLOC Section；
-- Memory Region；
-- 最终 HEX / binary layout。
-
-当前 `libAdc.a` 没有 strip，成员还包含 DWARF 信息，因此 archive 本身很大是正常的。
-
-这也带来另一个 Release Hygiene 问题：
-
-> 如果对外交付二进制库，需要关注 Debug Info、绝对源码路径、member timestamp 等元信息是否应该保留。
-
----
-
-## 11. Stage 3：Consumer 怎么使用 `libAdc.a`
-
-Release 模式下，工程最终会：
-
-```makefile
-SYSLIBS += -lAdc
-```
-
-同时当前目录：
-
-```text
--L./
-```
-
-位于 library search path。
-
-于是：
-
-```text
--lAdc
-   ↓
-搜索 libAdc.a
-   ↓
-交给 ltc
-```
-
-这里必须区分：
-
-```text
--L
-```
-
-和：
-
-```text
--l
-```
-
-的职责：
-
-```text
--Lxxx    = 去哪里找
--lAdc    = 要找哪个库
-```
-
----
-
-## 12. Linker 并不会把整个 `libAdc.a` 都塞进 ELF
-
-静态库最大的价值之一就在这里。
-
-假设 archive 中有：
-
-```text
-719 个 Object
-```
-
-Linker 不需要把 719 个全部放入镜像。
-
-它从当前 unresolved symbol 开始：
-
-```text
-某个 Object 需要 Foo()
-      ↓
-Archive Symbol Index
-      ↓
-找到 Foo 所在 Member
-      ↓
-抽取 Member
-      ↓
-该 Member 又产生新的 Undefined Symbol
-      ↓
-继续解析
-```
-
-实际工程的 Map 已经能在其它静态库上看到类似信息：
-
-```text
-Member[libSocManager.a|timer_soft_timer.o]
-Symbol[...]
-```
-
-这证明 TASKING Map 能记录：
-
-> **哪个符号触发了哪个 Archive Member 被拉入最终镜像。**
-
-当前缺少一次 `RELEASE_FLAG=1` 的完整 Map，因此：
-
-> `libAdc.a` 在 Release ON 时具体抽取了哪些成员、每个成员最终地址是多少，目前仍然是 Unknown。
-
-这也是现阶段最值得继续补的一项证据。
-
----
-
-## 13. Symbol Resolution：剩下的 439 个符号怎么办？
-
-当 Linker 把需要的 `libAdc.a` 成员抽出来以后，成员内部仍可能引用外部符号。
-
-例如：
-
-```text
-__d_xxx
-__ll_xxx
-LSL boundary symbol
-...
-```
-
-最终工程还需要：
-
-```text
--lfp
--lrt
-其它平台对象
-LSL 定义
-```
-
-继续完成解析。
-
-于是最终链接的核心问题不再是：
-
-> “Library 文件存在吗？”
-
-而是：
-
-> “所有真正被抽取进来的 Object，其 Undefined Symbol 能否在整个链接输入集合中被满足？”
-
-这才是判断一个静态库能不能成功集成的关键。
-
-对于当前 TASKING `ltc`，取证表明其 library 解析行为不能简单套用 GNU ld 的“一次从左往右扫描”经验；当前配置会对库进行多次扫描。因此讨论 library order 时，应以具体 TASKING Linker 行为为准，而不是直接套 GNU 工具链结论。
-
----
-
-## 14. LSL 在这个阶段才真正决定地址
-
-编译阶段已经产生：
-
-```text
-.bss.bss_lmu1_core0
-```
-
-但它还不知道最后实际地址。
-
-工程 `vLinkGen_Template.lsl` 中存在对应规则，例如：
-
-```text
-select "[.]bss.bss_lmu1_core0"
-```
-
-然后将其映射到相应 Memory Region，并产生相关 Linker boundary symbol。
-
-完整过程：
-
-```text
-Source Variable
-   ↓
-MemMap / pragma
-   ↓
-.bss.bss_lmu1_core0
-   ↓
-Object
-   ↓
-libAdc.a
-   ↓
-ltc
-   ↓
-LSL select
-   ↓
-LMU / DSPR / PFlash ...
+PFlash / LMU / DSPR / PSPR
    ↓
 Final Address
 ```
 
-这正好说明：
+则由 Linker + LSL 决定。
 
-> **Section Name 是 Compile-time Contract，Memory Address 是 Link-time Decision。**
+因此可以记住一句话：
+
+> **Compiler 决定“属于哪个 Section”，Linker 决定“Section 最后放在哪里”。**
 
 ---
 
-## 15. Startup 也是静态库契约的一部分
+## 5. Stage 2：从多个 `.o` 到静态库 `.a`
 
-当前工程存在：
+当一个模块需要以二进制形式对外交付时，可以把多个 Object 组织成一个静态库。
+
+例如：
 
 ```text
---no-clear
---user-provided-initialization-code
+ModuleA.o
+ModuleB.o
+ModuleC.o
+    │
+    │ artc
+    ▼
+libProduct.a
 ```
 
-因此变量初始化并不是一句：
+TASKING Archiver 的典型形式类似：
 
-> “Linker 把 `.data/.bss` 放进去就结束了。”
+```bash
+artc -cr libProduct.a -f objects.rsp
+```
 
-还涉及：
+其中 response file 用来保存较长的 Object 列表。
 
-- initialized data 的 load / run address；
-- Copy Table；
-- zero initialization；
-- startup code；
-- Linker 生成的边界符号。
+静态库的内部结构可以简化为：
 
-所以一个对外交付的嵌入式静态库，如果包含特殊：
+```text
+libProduct.a
+├── ModuleA.o
+├── ModuleB.o
+├── ModuleC.o
+├── ...
+└── Archive Symbol Index
+```
+
+它的核心并不是“再次编译”，而是：
+
+1. 保存多个可重定位 Object；
+2. 建立符号索引；
+3. 让 Linker 以后可以根据符号快速找到对应成员。
+
+所以 `.a` 更接近：
+
+> **Object 集合 + Symbol Index**
+
+而不是一个已经完成地址分配的程序。
+
+---
+
+## 6. 为什么静态库里可以存在 Undefined Symbol？
+
+这是理解静态库最关键的一步。
+
+假设：
+
+```text
+ModuleA.o
+  Defined:
+    Product_Init
+
+  Undefined:
+    Rte_Read_xxx
+    memcpy
+    Platform_GetTime
+```
+
+即使这些 Undefined Symbol 当前没有定义，`ModuleA.o` 仍然可以被正常放进：
+
+```text
+libProduct.a
+```
+
+因为 **Archive 阶段不负责最终符号解析**。
+
+真正的职责划分是：
+
+| 行为 | Compile | Archive | Link |
+|---|---:|---:|---:|
+| C → Machine Code | ✅ | ❌ | ❌ |
+| 产生 Symbol | ✅ | 保留 | 解析 |
+| 产生 Relocation | ✅ | 保留 | 处理 |
+| 打包多个 Object | ❌ | ✅ | ❌ |
+| 建立 Archive Index | ❌ | ✅ | 使用 |
+| 决定最终地址 | ❌ | ❌ | ✅ |
+| 执行 Memory Placement | ❌ | ❌ | ✅ |
+| 生成 ELF | ❌ | ❌ | ✅ |
+
+因此：
+
+> **生成静态库时，不需要把所有外部依赖全部解决。**
+
+真正需要保证的是：
+
+> Consumer 最终 Link 时，所有被使用到的 Undefined Symbol 都能够找到对应定义。
+
+---
+
+## 7. Stage 3：Consumer 如何链接一个静态库
+
+当另一个工程拿到：
+
+```text
+libProduct.a
+```
+
+通常需要同时配置：
+
+```text
+-L<library_path>
+-lProduct
+```
+
+两者职责完全不同：
+
+```text
+-Lxxx       → 去哪里找库
+-lProduct   → 要链接哪个库
+```
+
+然后 Linker 开始处理：
+
+```text
+Application Objects
+      +
+libProduct.a
+      +
+Runtime Libraries
+      ↓
+      ltc
+      ↓
+ELF
+```
+
+### Linker 会把整个 `.a` 都放进 ELF 吗？
+
+通常不会。
+
+静态库最大的特点之一就是：
+
+> **Linker 按需要从 Archive 中抽取 Object。**
+
+例如：
+
+```text
+Application.o
+   │
+   │ needs Product_Init
+   ▼
+Archive Symbol Index
+   │
+   ▼
+找到 ModuleA.o
+   │
+   ▼
+抽取 ModuleA.o
+   │
+   ├─ 又产生新的 Undefined Symbol
+   ▼
+继续解析
+```
+
+因此：
+
+```text
+Archive File Size
+≠
+最终进入 ELF 的代码大小
+≠
+最终 Flash 占用
+```
+
+这也是为什么一个很大的静态库，最终对 ECU ROM 的增量可能远小于库文件本身。
+
+---
+
+## 8. Linker 不只做“找函数”，还要做 Relocation 和 Memory Placement
+
+当需要的 Object 被抽取出来以后，Linker 还要继续完成：
+
+1. Symbol Resolution；
+2. Relocation；
+3. Section 合并；
+4. LSL 匹配；
+5. Memory Region 分配；
+6. Final Address Assignment；
+7. ELF / HEX 生成。
+
+可以把整个过程理解成：
+
+```text
+Object Section
+    ↓
+Linker
+    ↓
+LSL select / group
+    ↓
+Memory Region
+    ↓
+Final Address
+```
+
+对于 TC397 这类多核 MCU，这一步尤其重要，因为代码和数据可能需要进入：
+
+- PFlash；
+- DSPR；
+- PSPR；
+- LMU；
+- cached / non-cached memory；
+- 不同 Core 对应的专属区域。
+
+所以一个静态库即使：
+
+```text
+API 没问题
+ABI 没问题
+Symbol 也能解析
+```
+
+仍然可能因为：
+
+```text
+Section 没有正确匹配 LSL
+Memory Region 不够
+Startup 没有初始化对应数据
+```
+
+而无法正确运行。
+
+---
+
+## 9. 为什么嵌入式静态库不能只交付一个 `.a`
+
+假设我们作为 Producer，要把：
+
+```text
+libProduct.a
+```
+
+交给第三方。
+
+真正完整的交付至少应该考虑下面几类信息。
+
+### 9.1 Public Header
+
+第三方需要知道：
+
+- API 函数；
+- struct / enum；
+- callback；
+- version；
+- public typedef。
+
+### 9.2 ABI 要求
+
+例如：
+
+- Target CPU / ISA；
+- Compiler / compatible ABI；
+- alignment；
+- enum model；
+- floating-point model；
+- C/C++ ABI。
+
+### 9.3 Link Dependencies
+
+例如：
+
+```text
+libProduct.a
+   ↓
+runtime library
+platform library
+AUTOSAR BSW / RTE symbols
+```
+
+如果库依赖其他 library，需要明确告诉 Consumer。
+
+### 9.4 Memory / LSL Contract
+
+如果库定义了特殊 section：
 
 ```text
 .data.xxx
 .bss.xxx
+.text.xxx
 ```
 
-就不能只告诉第三方：
+第三方可能还需要同步：
 
-```text
--lAdc
-```
+- LSL select；
+- memory region；
+- alignment；
+- cached / non-cached 属性。
 
-还应该明确：
+### 9.5 Startup / Runtime Contract
 
-> Consumer 的 LSL 和 Startup 是否能够正确处理这些 Section。
+还可能涉及：
 
-这也是嵌入式静态库与普通桌面软件静态库集成的核心差异之一。
+- `.data` copy；
+- `.bss` clear；
+- Init API；
+- Task / Core；
+- Heap / Stack；
+- callback；
+- RTE / MCAL / OS dependency。
+
+因此：
+
+> **真正交付的不是一个 `.a` 文件，而是一套二进制接口契约。**
 
 ---
 
-## 16. Stage 4：最后生成 ELF / HEX
+## 10. Producer 和 Consumer 是同一条链的两端
 
-Linker 完成：
+可以用两个匿名化场景理解。
 
-1. Archive Member Extraction
-2. Symbol Resolution
-3. Relocation
-4. Section Placement
-5. Address Assignment
-
-之后生成：
+### Producer：把自己的模块做成库
 
 ```text
-TestSuit.elf
-TestSuit.map
-TestSuit.hex
-```
-
-现有取证中的 `TestSuit.elf` 约：
-
-```text
-69,969,736 bytes
-```
-
-但这个现有产物属于：
-
-```text
-RELEASE_FLAG = OFF
-```
-
-也就是：
-
-> 工程 Object 直接进入 ELF，并没有通过 `libAdc.a → -lAdc` 的 Release 自消费路径。
-
-因此目前能确认：
-
-```text
-Source → Object → ELF
-```
-
-以及：
-
-```text
-Source → Object → libAdc.a
-```
-
-都已经跑通。
-
-而：
-
-```text
-libAdc.a → 按需抽取 → Final ELF
-```
-
-这一段机制已经确认，但 `libAdc.a` 自身在 Release ON 下的逐成员地址证据仍待一次安全构建闭环。
-
----
-
-## 17. 一张图总结完整生命周期
-
-```text
-┌──────────────────── Producer ────────────────────┐
-
-ADC Source (.c)
+Product Source
       │
       │ cctc
       ▼
-Relocatable Objects (.o)
+Objects
       │
-      │  section / symbol / relocation 已存在
+      │ artc
       ▼
-719 Objects
-      │
-      │ artc -cr libAdc.a -f libAdc.rsp
-      ▼
-libAdc.a
-      │
-      ├─ !<arch>
-      ├─ Object Members
-      └─ Archive Symbol Index
-
-└─────────────────────────────────────────────────┘
-                       │
-                       │ Delivery / Release
-                       ▼
-┌──────────────────── Consumer ────────────────────┐
-
--L...
--lAdc
+libProduct.a
       │
       ▼
-TASKING ltc
-      │
-      ├─ Archive Member Extraction
-      ├─ Symbol Resolution
-      ├─ Runtime Libraries
-      ├─ Relocation
-      └─ LSL Placement
-      ▼
-TestSuit.elf
-      │
-      ▼
-HEX / ECU
-
-└─────────────────────────────────────────────────┘
+交付第三方
 ```
 
----
-
-## 18. 反过来看第三方库 `libDrApp.a`
-
-前面的 `libAdc.a` 是：
-
-> **当前工程作为 Producer。**
-
-而第三方交付的 `libDrApp.a` 正好提供了另一侧案例：
+### Consumer：接入供应商提供的库
 
 ```text
-第三方源码
-   ↓
-供应商编译
-   ↓
-libDrApp.a
-   ↓
+Supplier
+   │
+   ▼
+libVendor.a + headers
+   │
+   ▼
 当前工程
-   ↓
--lDrApp
-   ↓
+   │
+   ├─ include path
+   ├─ library path
+   ├─ -lVendor
+   ├─ runtime dependencies
+   └─ LSL / startup
+   │
+   ▼
 ltc
-   ↓
+   │
+   ▼
 ELF
 ```
 
-当前工程通过：
+这两种场景实际上遵循同一个规则：
 
-```text
-DEEPROUTE_SWC_FLAG=1
-```
-
-同时完成：
-
-- 切换对应 SWC Wrapper；
-- 增加 library search path；
-- 增加 `-lDrApp`；
-- 增加配套 `-lc_tc397`。
-
-因此两个案例刚好形成镜像：
-
-| 视角 | 案例 |
-|---|---|
-| 我怎么把自己的源码做成库 | `libAdc.a` |
-| 我怎么把别人的库接入工程 | `libDrApp.a` |
-
-理解了前者，后者的很多问题就自然清楚了。
+> Producer 在 Compile / Archive 阶段固定二进制边界，Consumer 在 Link 阶段完成最终解析和部署。
 
 ---
 
-## 19. Producer 和 Consumer 真正需要对齐什么？
+## 11. 最容易混淆的几个概念
 
-一个静态库能够被另一个嵌入式工程正确使用，至少需要检查：
+### 11.1 `.o` 不是最终程序
 
-### 编译 / ABI
+它已经包含机器码，但仍然可能有：
 
-- CPU Architecture
-- TriCore ISA
-- Compiler ABI
-- Calling Convention
-- Enum Model
-- Alignment
-- Floating Point Model
-- C / C++ ABI
-- Address Model
+- Undefined Symbol；
+- Relocation；
+- 未确定的最终地址。
 
-### Link
+### 11.2 `.a` 不是“已经链接好的模块”
 
-- Public Header
-- Library Search Path
-- Library Name
-- Undefined Symbol Provider
-- Runtime Library
-- Library Dependency
-- TASKING Linker 行为
-
-### Memory
-
-- Custom Section
-- LSL Select
-- PFlash / LMU / DSPR 等 Region
-- Copy / Clear
-- Startup
-
-### Runtime
-
-- Init 顺序
-- API 生命周期
-- Task / Core
-- Stack
-- Heap
-- RTE / BSW / MCAL 依赖
-
-所以：
-
-> **“给一个 `.a` 文件”并不等于完成嵌入式 Library Delivery。**
-
-真正的交付对象应该是一套完整的二进制接口契约。
-
----
-
-## 20. 最容易混淆的几个概念
-
-### 20.1 `.o` 不是最终机器镜像
-
-它已经有机器码，但：
-
-- 可以有 Undefined Symbol；
-- 可以有 Relocation；
-- 没有最终运行地址。
-
-### 20.2 `.a` 不是把所有依赖都链接好了
-
-它主要是：
+它本质上是：
 
 ```text
 Object 集合 + Symbol Index
 ```
 
-因此完全可以保留外部依赖。
+最终 Link 仍然不可缺少。
 
-### 20.3 静态库文件大，不代表 Flash 占用大
+### 11.3 同一个 MCU 不代表库一定兼容
 
-```text
-archive size
-≠
-linked code size
-≠
-Flash usage
-```
+除了 CPU，还必须看：
 
-### 20.4 Section 和 Address 不是一回事
+- ABI；
+- compiler options；
+- data model；
+- floating-point model；
+- alignment；
+- runtime。
 
-```text
-Compiler → Section Name
-Linker   → Final Address
-```
-
-### 20.5 能找到 Library，不代表集成成功
-
-真正需要闭环：
+### 11.4 能找到库不代表集成完成
 
 ```text
-找到库
+找到 .a
   ↓
-抽取成员
+API 可编译
   ↓
-符号全部解析
+Symbol 可解析
   ↓
-Section 正确放置
+Section 可放置
   ↓
-Startup 正确初始化
+Startup 正确
   ↓
-Runtime 正确执行
+Runtime 正确
 ```
+
+任何一层出问题，都可能表现成完全不同的故障。
+
+### 11.5 库文件大小不等于 ROM/RAM 占用
+
+`.a` 里还可能包含：
+
+- Debug Information；
+- Symbol Table；
+- String Table；
+- Relocation；
+- 未被最终抽取的 Object。
+
+实际资源占用应该看：
+
+> **最终 ELF / Map 中真正进入镜像的 ALLOC Section。**
 
 ---
 
-## 21. 当前证据已经确认什么，什么还没有确认？
+## 12. 总结
 
-| 项目 | 状态 |
-|---|---|
-| TC397 / TASKING v6.3r1 | Confirmed |
-| `.c → .o` 编译规则 | Confirmed |
-| ABI 关键编译参数 | Confirmed |
-| Section 编译期产生 | Confirmed |
-| `libAdc.a` 使用 `artc` | Confirmed |
-| 719 个 Archive Member | Confirmed |
-| `!<arch>` 格式 | Confirmed |
-| Archive 保留 relocation / undefined symbol | Confirmed |
-| Release 模式使用 `-lAdc` | Confirmed |
-| Linker 按需抽取机制 | Confirmed |
-| LSL 决定最终 Region / Address | Confirmed |
-| Release ON 时 `libAdc.a` 实际抽取哪些成员 | **Unknown** |
-| Release ON 时成员最终地址 | **Unknown** |
-| 最大 Stack | **Unknown** |
-| 完整逐条 `-I` 编译命令 | **Unknown** |
-| 正式第三方交付包完整清单 | **Unknown** |
-
-保留 Unknown 很重要。
-
-工程分析最危险的不是“不知道”，而是：
-
-> **把“机制上应该如此”写成“当前工程已经证明如此”。**
-
----
-
-## 22. 最终结论
-
-从这个 TC397 + TASKING 工程可以非常清楚地看到，静态库生命周期不是一句：
-
-```text
-编译成 .a 然后链接
-```
-
-而是一条严格分层的流水线：
+一个 TC397 静态库从源码到最终 ECU 镜像，可以抽象成：
 
 ```text
 .c
  │
- │ 编译：固定 ISA / ABI / Symbol / Section
+ │ Compile
+ │ 固定 ISA / ABI / Symbol / Section
  ▼
 .o
  │
- │ 归档：组织 Object + 建立 Symbol Index
+ │ Archive
+ │ 组织 Object + 建立 Symbol Index
  ▼
 .a
  │
- │ 链接：按需抽取 + Symbol Resolution + Relocation
+ │ Link
+ │ 抽取成员 + Symbol Resolution + Relocation
  ▼
 LSL
  │
- │ 决定 Memory Region / Final Address
+ │ Memory Placement
  ▼
 ELF
  │
@@ -1095,12 +703,18 @@ ELF
 HEX / ECU Runtime
 ```
 
-其中最值得记住的是三句话：
+真正需要记住的是三点：
 
-> **第一，`.o` 可以保留 Undefined Symbol，因为最终解析发生在 Link。**
+> **第一，`.o` 可以保留 Undefined Symbol，因为最终解析发生在 Link 阶段。**
 
-> **第二，`.a` 本质上是一组可重定位 Object 的归档，而不是已经完成链接的程序。**
+> **第二，`.a` 本质上是可重定位 Object 的归档，而不是已经完成链接的程序。**
 
-> **第三，嵌入式库是否真正可用，不只取决于 API，还取决于 ABI、Runtime、Section、LSL、Startup 和最终执行环境。**
+> **第三，嵌入式静态库是否真正可用，不只取决于 API，还取决于 ABI、Runtime、Section、LSL、Startup 和最终执行环境。**
 
-一旦把 **Compile → Archive → Link** 三个阶段真正分开，很多常见问题——为什么 `-lxxx` 会报错、为什么 Library 很大但 Flash 增量很小、为什么同样 TC397 的库仍可能不能用、为什么还需要修改 LSL——都会变得非常直观。
+理解了 **Compile → Archive → Link** 的职责边界之后，很多工程问题都会变得更直观：
+
+- 为什么同一个 TC397 的库仍可能不能直接使用；
+- 为什么 `-lxxx` 找到了库却还会报 Undefined Symbol；
+- 为什么库文件很大但 Flash 增量并不大；
+- 为什么接入一个静态库还可能需要修改 LSL；
+- 为什么一个真正可交付的静态库远不止一个 `.a` 文件。
