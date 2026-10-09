@@ -164,6 +164,7 @@ export default hopeTheme({
   // 在这里配置主题提供的插件
   plugins: {
     blog: true,
+    redirect: true,
     // Keep the index and page mapping on the same deployment version.
     slimsearch: {
       worker: `slimsearch-${process.env.GITHUB_SHA?.slice(0, 12) ?? "local"}.worker.js`,
@@ -242,3 +243,4 @@ export default hopeTheme({
     // },
   },
 });
+
