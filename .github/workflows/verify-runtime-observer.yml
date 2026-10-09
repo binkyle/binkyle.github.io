@@ -1,0 +1,41 @@
+name: Verify runtime observer source archive
+on:
+  push:
+    paths:
+      - src/.vuepress/public/downloads/embedded-runtime-observer-0.1.0.tar.gz
+      - .github/workflows/verify-runtime-observer.yml
+  pull_request:
+    paths:
+      - src/.vuepress/public/downloads/embedded-runtime-observer-0.1.0.tar.gz
+      - .github/workflows/verify-runtime-observer.yml
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+        trace: [0, 64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract published source
+        run: tar -xzf src/.vuepress/public/downloads/embedded-runtime-observer-0.1.0.tar.gz -C "$RUNNER_TEMP"
+      - name: Build source archive
+        run: |
+          cmake -S "$RUNNER_TEMP/embedded-runtime-observer-0.1.0" -B "$RUNNER_TEMP/rtm-build" -DCMAKE_C_COMPILER=${{ matrix.compiler }} -DRTM_TRACE_CAPACITY=${{ matrix.trace }} -DRTM_SANITIZE=ON
+          cmake --build "$RUNNER_TEMP/rtm-build" --parallel
+          ctest --test-dir "$RUNNER_TEMP/rtm-build" --output-on-failure
+      - name: Baseline formatting
+        run: python3 "$RUNNER_TEMP/embedded-runtime-observer-0.1.0/tools/check_format.py"
+  analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: tar -xzf src/.vuepress/public/downloads/embedded-runtime-observer-0.1.0.tar.gz -C "$RUNNER_TEMP"
+      - run: sudo apt-get update && sudo apt-get install -y cppcheck
+      - name: Analyze source archive
+        run: |
+          cd "$RUNNER_TEMP/embedded-runtime-observer-0.1.0"
+          cppcheck --enable=warning,performance,portability --error-exitcode=1 --std=c99 -Iinclude src
+          gcc -std=c99 -Wall -Wextra -Werror -fanalyzer -Iinclude -c src/rtm.c src/port.c
