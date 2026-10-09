@@ -1,7 +1,7 @@
 ---
 title: 嵌入式 Runtime Measurement 专题：从 CPU Load 到通用观测核心
 icon: code
-date: 2026-10-09
+date: 2026-10-09T10:00:27Z
 description: CPU Load 原理、C99 核心架构与 TC397 AUTOSAR 适配方法的连续专题，附可运行源码和测试。
 category:
   - Autosar

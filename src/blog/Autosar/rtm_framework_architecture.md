@@ -1,7 +1,7 @@
 ---
 title: 设计一个轻量级嵌入式 Runtime Measurement 框架
 icon: code
-date: 2026-10-09
+date: 2026-10-09T10:00:27Z
 description: 从成熟 Trace 方案的分工出发，设计可移植 C99 测量核心，明确每核所有权、ISR 嵌套、函数重入、固定窗口和快照契约。
 category:
   - Autosar

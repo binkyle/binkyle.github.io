@@ -1,7 +1,7 @@
 ---
 title: 从 TC397 AUTOSAR 工程实践到可移植 RTM 框架
 icon: code
-date: 2026-10-09
+date: 2026-10-09T10:00:27Z
 description: 用独立 Hook 和 Mock STM 案例说明 RTM 核心如何接入 AUTOSAR，区分算法验证、业务源码审查和 TC397 硬件验证。
 category:
   - Autosar

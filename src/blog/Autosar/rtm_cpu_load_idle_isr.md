@@ -1,7 +1,7 @@
 ---
 title: 嵌入式 CPU Load 是如何计算的：从 Idle Task 到 ISR 抢占
 icon: code
-date: 2026-10-09
+date: 2026-10-09T10:00:27Z
 description: 用具体时间线解释 Idle、Task 与 ISR 的归属，分析任务 Hook、中断嵌套、STM 回绕和统计窗口对 CPU Load 的影响。
 category:
   - Autosar
