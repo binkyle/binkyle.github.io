@@ -41,5 +41,7 @@ make test
 
 时间示例输出 `Task=20 Idle=70 ISR=10 Total=100 Load=30.0%`。栈示例用虚拟数组展示 2048 B 容量、640 B 峰值、1408 B 剩余量和 31.25% 使用率。Host 模型已经验证；真实 TC397/MICROSAR 接入分别完成目标构建、查询权限与硬件对照。
 
-也可以下载[冻结的 v0.1.0 时间核心归档](/downloads/embedded-runtime-observer-0.1.0.tar.gz)进行离线复现。该归档不包含 Stack Observer；v0.2.0 源码、验证和接入说明以仓库内文档为准。
+也可以下载[v0.1.0 时间核心公开归档](/downloads/embedded-runtime-observer-0.1.0.tar.gz)进行离线复现。2026-10-10 更新了采集工具、测试和案例说明，移除了业务目录与专用匹配标识；时间核心保持 v0.1.0，该归档不包含 Stack Observer。v0.2.0 源码、验证和接入说明以仓库内文档为准。
+
+公开归档 SHA-256：`fcb714abc12bdf3b1d14ec028d17ee77f8e50446d7197a9c15cd69ed6c85e889`。
 
