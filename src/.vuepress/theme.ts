@@ -168,6 +168,17 @@ export default hopeTheme({
     // Keep the index and page mapping on the same deployment version.
     slimsearch: {
       worker: `slimsearch-${process.env.GITHUB_SHA?.slice(0, 12) ?? "local"}.worker.js`,
+      // Explicit string formatters keep category/tag matches renderable.
+      customFields: [
+        {
+          getter: (page) => page.frontmatter.category as string[] | string | undefined,
+          formatter: "分类：$content",
+        },
+        {
+          getter: (page) => page.frontmatter.tag as string[] | string | undefined,
+          formatter: "标签：$content",
+        },
+      ],
     },
 
     // 启用之前需安装 @waline/client
