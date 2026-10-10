@@ -2,7 +2,7 @@
 title: 轻量级 Runtime Measurement 框架设计
 icon: code
 date: 2026-10-09T10:00:27Z
-description: 将运行时的执行者变化实现为显式事件，使用每核状态、ISR 栈、函数测量点与复制式快照构建可移植的 C99 测量核心。
+description: 以显式事件、每核状态与复制式快照构建 C99 时间核心，并在同一框架中独立扩展 Stack Observer 的容量与水位观测。
 category:
   - Autosar
 tag:
@@ -19,13 +19,13 @@ redirectFrom:
 
 运行时测量可以分成三个职责：平台产生执行事件，核心维护时间归属，报告路径输出统计结果。显式的分工使同一个算法可以在 PC、裸机和 RTOS 环境中运行。
 
-`embedded-runtime-observer` 采用 C99 和静态内存实现这一模型。Task、Idle、ISR、调度空档和函数点共用明确的事件边界，在线统计与可选 Trace 各自保留输出状态。
+`embedded-runtime-observer` 采用 C99 和静态内存实现这一模型。Task、Idle、ISR、调度空档和函数点共用明确的事件边界，在线统计与可选 Trace 各自保留输出状态。v0.2.0 增加独立 Stack Observer，将栈内存需求接入同一报告层。
 
 本文承接[时间模型](./cpu-load.md)，沿着事件进入核心后的处理过程介绍框架设计。
 
 ## 1. 事件驱动的分层结构
 
-![Runtime Measurement 的平台、事件、统计与报告分层](/assets/rtm/rtm_architecture.svg)
+![时间核心与独立 Stack Observer 的采集、统计和副本报告分层](/assets/rtm/rtm_architecture.svg)
 
 平台层提供 Timer、核 ID、任务映射、Hook 和临界区。核心接受显式时间戳：
 
@@ -121,5 +121,15 @@ cd autosar-module-lab/embedded-runtime-observer
 make test
 ```
 
-[完整源码](https://github.com/binkyle/autosar-module-lab/tree/main/embedded-runtime-observer)提供事件 API、统计契约、移植说明和 Host 工具。下一篇把这些接口连接到[TC397 与 AUTOSAR 的运行时测量路径](./autosar-integration.md)。
+## 9. 在时间核心旁扩展栈观测
+
+时间核心以每核 `rtm_core_t` 持有执行状态，Stack Observer 以每块物理区域的 `rtm_stack_t` 持有容量、历史水位与 Guard 结果。两者是独立 C99 库，栈测量无需 Task/ISR 时间事件、Trace 或 TriCore 寄存器。
+
+应用拥有的离线区域采用 byte painting 和顺序扫描；OS-managed 区域只使用合法 OS 查询回调。测量接口取得新样本，snapshot 接口复制已有结果。状态、对象身份和共享标记让报告层可以解释每项数据。
+
+栈扫描成本取决于未改变区域长度，跨核 OS 查询也可能等待远端服务，因此按各自的调用契约安排在报告路径。时间事件的中断保护与栈查询的后端同步分别落实，随后统一发布副本。
+
+新增 39 个栈场景、8,000 次字节 oracle 核验与 20 万次并发串行化操作，和原有时间测试一起通过回归。[Stack Measurement 文章](./stack-measurement.md)展开内存模型、线性水位、共享区域和单位转换。
+
+[完整源码](https://github.com/binkyle/autosar-module-lab/tree/main/embedded-runtime-observer)提供事件与栈 API、统计契约、移植说明和 Host 工具。下一篇把时间接口连接到[TC397 与 AUTOSAR 的运行时测量路径](./autosar-integration.md)。
 
