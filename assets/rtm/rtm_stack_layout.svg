@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="660" viewBox="0 0 1040 660" role="img" aria-labelledby="title desc">
+  <title id="title">Downward stack watermark: 2048 byte capacity, 640 byte peak</title>
+  <desc id="desc">A 2052-byte simulated object contains 2048 usable bytes and a 4-byte low-address guard. The used high-address suffix is 640 bytes and the intact paint prefix is 1408 bytes. The guard is drawn enlarged, outside effective capacity.</desc>
+  <rect width="1040" height="660" rx="12" fill="#f8fafc"/>
+  <style>text{font-family:Arial,sans-serif;fill:#0f172a}.title{font-size:27px;font-weight:700}.label{font-size:22px}.small{font-size:18px;fill:#475569}.strong{font-size:23px;font-weight:700}</style>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="none" stroke="#64748b" stroke-width="1.5"/></marker></defs>
+  <text x="34" y="48" class="title">Stack painting: observed history and effective capacity</text>
+  <text x="112" y="116" class="small">HIGH ADDRESS</text>
+  <rect x="112" y="144" width="300" height="128" fill="#fed7aa" stroke="#94a3b8"/>
+  <text x="262" y="197" text-anchor="middle" class="strong">Changed cells</text>
+  <text x="262" y="234" text-anchor="middle" class="label">Peak: 640 B</text>
+  <rect x="112" y="272" width="300" height="282" fill="#dbeafe" stroke="#94a3b8"/>
+  <text x="262" y="385" text-anchor="middle" class="strong">Intact paint</text>
+  <text x="262" y="425" text-anchor="middle" class="label">Remaining: 1408 B</text>
+  <text x="262" y="464" text-anchor="middle" class="small">0xAA bytes / 4 B cells</text>
+  <path d="M112 272 H450" stroke="#ea580c" stroke-width="3"/>
+  <path d="M450 272 L516 244" stroke="#ea580c" stroke-width="2" fill="none"/>
+  <text x="532" y="235" class="strong">Observed watermark</text>
+  <text x="532" y="272" class="small">First changed cell from the low end</text>
+  <path d="M450 144 H474 M474 144 V554 M450 554 H474" stroke="#64748b" stroke-width="2" fill="none"/>
+  <text x="532" y="352" class="strong">Effective capacity: 2048 B</text>
+  <text x="532" y="392" class="label">640 / 2048 = 31.25%</text>
+  <text x="532" y="440" class="small">SP may retreat; the observed peak remains.</text>
+  <text x="532" y="475" class="small">Current SP usage requires a separate source.</text>
+  <rect x="112" y="554" width="300" height="36" fill="#fecaca" stroke="#94a3b8"/>
+  <text x="262" y="581" text-anchor="middle" class="label">Guard: 4 B</text>
+  <text x="532" y="580" class="small">Outside capacity; drawn enlarged</text>
+  <path d="M60 154 V580" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text transform="translate(38 440) rotate(-90)" class="small">STACK GROWS DOWN</text>
+  <text x="112" y="621" class="small">LOW ADDRESS</text>
+  <text x="532" y="621" class="small">Simulated object: 2052 B; no extra reserves</text>
+</svg>

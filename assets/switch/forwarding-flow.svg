@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="950" height="990" viewBox="0 0 950 990" role="img" aria-labelledby="title desc">
+<title id="title">一帧报文的二层转发逻辑</title><desc id="desc">未标记演示帧从 P1 进入，经 PVID 120 分类、VTU 成员检查与 FID 9，再查找目的 MAC 选择 P8，经相关端口策略与状态筛选，以 Tagged VID120 从 P8 发给 SoC。旁路说明各阶段可能丢弃或改走未知目的策略。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#3267a8"/></marker><marker id="green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#217a69"/></marker></defs><rect width="950" height="990" rx="20" fill="#f6f8fc"/><g font-family='system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif' fill="#172b43">
+<text x="475" y="43" text-anchor="middle" font-size="27" font-weight="700" fill="#172b43">P1 → P8：一帧虚拟报文的去向</text>
+<text x="475" y="77" text-anchor="middle" font-size="17" font-weight="400" fill="#546b85">逻辑分析顺序，不表示芯片实际流水线级数</text>
+<rect x="55" y="120" width="482" height="102" rx="12" fill="#fff" stroke="#c9d5e5" stroke-width="2"/>
+<text x="296.0" y="165.0" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">P1 接收 Untagged 帧</text>
+<text x="296.0" y="191.0" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">SA = Sensor；DA = SoC</text>
+<rect x="55" y="262" width="482" height="102" rx="12" fill="#fff" stroke="#c9d5e5" stroke-width="2"/>
+<text x="296.0" y="307.0" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">入口 VLAN 分类</text>
+<text x="296.0" y="333.0" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">PVID 120 → 内部 VID 120</text>
+<rect x="55" y="404" width="482" height="102" rx="12" fill="#fff" stroke="#c9d5e5" stroke-width="2"/>
+<text x="296.0" y="449.0" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">VTU 与 FID</text>
+<text x="296.0" y="475.0" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">P1 / P8 是成员；FID = 9</text>
+<rect x="55" y="546" width="482" height="102" rx="12" fill="#fff" stroke="#c9d5e5" stroke-width="2"/>
+<text x="296.0" y="591.0" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">ATU / FDB 查询</text>
+<text x="296.0" y="617.0" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">FID 9 + SoC MAC → {P8}</text>
+<rect x="55" y="688" width="482" height="102" rx="12" fill="#fff" stroke="#c9d5e5" stroke-width="2"/>
+<text x="296.0" y="733.0" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">出口资格筛选</text>
+<text x="296.0" y="759.0" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">相关端口策略 + Forwarding + Link</text>
+<rect x="55" y="830" width="482" height="102" rx="12" fill="#fff" stroke="#c9d5e5" stroke-width="2"/>
+<text x="296.0" y="875.0" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">P8 出口 Tag 处理</text>
+<text x="296.0" y="901.0" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">Tagged VID 120 → Computing SoC</text>
+<path d="M296 222V262" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<path d="M296 364V404" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<path d="M296 506V546" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<path d="M296 648V688" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<path d="M296 790V830" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<rect x="594" y="262" width="310" height="102" rx="12" fill="#fff4ed" stroke="#e8c5a8" stroke-width="2"/>
+<text x="749.0" y="307.0" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">分类或接纳不满足</text>
+<text x="749.0" y="333.0" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">拒绝帧 / 使用其他 VID</text>
+<path d="M537 313H594" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<rect x="594" y="404" width="310" height="102" rx="12" fill="#fff4ed" stroke="#e8c5a8" stroke-width="2"/>
+<text x="749.0" y="449.0" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">VTU 缺失或入口不合格</text>
+<text x="749.0" y="475.0" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">按当前模式丢弃 / 回退</text>
+<path d="M537 455H594" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<rect x="594" y="546" width="310" height="102" rx="12" fill="#eef6fc" stroke="#bfd1e5" stroke-width="2"/>
+<text x="749.0" y="591.0" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">DA 未命中</text>
+<text x="749.0" y="617.0" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">未知单播：Flood / Drop 等</text>
+<path d="M537 597H594" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<rect x="594" y="688" width="310" height="102" rx="12" fill="#fff4ed" stroke="#e8c5a8" stroke-width="2"/>
+<text x="749.0" y="733.0" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">出口集合为空</text>
+<text x="749.0" y="759.0" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">无普通转发出口</text>
+<path d="M537 739H594" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<text x="475" y="969" text-anchor="middle" font-size="17" font-weight="400" fill="#546b85">演示：VID 120 ≠ FID 9；PVID、成员关系与目的地址分别验证</text>
+</g></svg>

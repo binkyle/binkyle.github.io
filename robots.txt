@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Sitemap: https://binkyle.github.io/sitemap.xml
+
+
+User-agent:*
+Disallow:

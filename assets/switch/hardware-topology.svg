@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="690" viewBox="0 0 1040 690" role="img" aria-labelledby="title desc">
+<title id="title">车载以太网 Switch：数据与管理连接</title><desc id="desc">虚拟 Sensor 经两端 T1 PHY 从 P1 接入交换核心；P8 用兼容高速 SerDes 接 Computing SoC；P3 用 RGMII 接 MCU。MCU 另经 MDC/MDIO 管理寄存器，普通 Sensor 到 SoC 帧不经过 MCU。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#3267a8"/></marker><marker id="green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#217a69"/></marker></defs><rect width="1040" height="690" rx="20" fill="#f6f8fc"/><g font-family='system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif' fill="#172b43">
+<text x="520" y="44" text-anchor="middle" font-size="27" font-weight="700" fill="#172b43">连接边界：PHY · 板级接口 · 交换核心</text>
+<text x="520" y="78" text-anchor="middle" font-size="17" font-weight="400" fill="#546b85">虚拟拓扑与端口号，仅用于演示</text>
+<rect x="342" y="117" width="385" height="450" rx="18" fill="#eef4fe" stroke="#a8bdd8" stroke-width="2"/>
+<text x="535" y="151" text-anchor="middle" font-size="23" font-weight="700" fill="#172b43">Switch</text>
+<rect x="30" y="180" width="228" height="106" rx="12" fill="#fff" stroke="#c9d5e5" stroke-width="2"/>
+<text x="144.0" y="227.0" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">Sensor</text>
+<text x="144.0" y="253.0" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">MAC + T1 PHY</text>
+<rect x="373" y="184" width="325" height="97" rx="12" fill="#fff" stroke="#c9d5e5" stroke-width="2"/>
+<text x="535.5" y="226.5" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">P1：集成 T1 PHY</text>
+<text x="535.5" y="252.5" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">介质端 → 端口 MAC</text>
+<path d="M258 232H373" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<text x="313" y="207" text-anchor="middle" font-size="16" font-weight="400" fill="#172b43">T1 铜缆</text>
+<rect x="413" y="335" width="242" height="83" rx="12" fill="#fff" stroke="#c9d5e5" stroke-width="2"/>
+<text x="534.0" y="370.5" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">交换核心</text>
+<text x="534.0" y="396.5" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">VLAN / FDB / 队列</text>
+<path d="M535 281V335" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<rect x="775" y="342" width="233" height="101" rx="12" fill="#fff" stroke="#c9d5e5" stroke-width="2"/>
+<text x="891.5" y="386.5" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">Computing SoC</text>
+<text x="891.5" y="412.5" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">兼容串行接口 + MAC</text>
+<path d="M655 376H775" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<text x="711" y="354" text-anchor="middle" font-size="15" font-weight="400" fill="#172b43">P8 · SerDes</text>
+<rect x="377" y="474" width="315" height="70" rx="12" fill="#fff" stroke="#c9d5e5" stroke-width="2"/>
+<text x="534.5" y="516.0" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">P3：兼容 RGMII 端口</text>
+<path d="M535 418V474" marker-start="url(#arrow)" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<rect x="30" y="468" width="228" height="108" rx="12" fill="#fff" stroke="#c9d5e5" stroke-width="2"/>
+<text x="144.0" y="516.0" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">MCU</text>
+<text x="144.0" y="542.0" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">GETH MAC + 管理软件</text>
+<path d="M258 508H377" marker-start="url(#arrow)" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<text x="315" y="488" text-anchor="middle" font-size="16" font-weight="400" fill="#172b43">RGMII</text>
+<rect x="779" y="487" width="225" height="77" rx="12" fill="#e7f5f1" stroke="#aad7ca" stroke-width="2"/>
+<text x="891.5" y="519.5" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">Switch 寄存器</text>
+<text x="891.5" y="545.5" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">状态 / 配置 / 表项</text>
+<path d="M145 576V609H891V564" stroke="#217a69" stroke-width="2.5" fill="none" marker-end="url(#green)" stroke-dasharray="7 5"/>
+<text x="520" y="637" text-anchor="middle" font-size="19" font-weight="600" fill="#217a69">MDC / MDIO：管理访问；业务帧使用各端口数据通道</text>
+<text x="520" y="667" text-anchor="middle" font-size="17" font-weight="400" fill="#546b85">集成 PHY、可选模式与接口复用依芯片和 PCB 而定</text>
+</g></svg>

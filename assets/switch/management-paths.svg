@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1030" height="830" viewBox="0 0 1030 830" role="img" aria-labelledby="title desc">
+<title id="title">配置记录上报与硬件管理路径</title><desc id="desc">左边是内存记录经组帧和 RTE 交给上层接收方；右边是 MCU 请求经 UMSD、BSP和Ethernet MCAL、MDIO控制器、MDC/MDIO到达Switch寄存器。成功读回的数据可以作为带时间的硬件观测另行上报。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#3267a8"/></marker><marker id="green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#217a69"/></marker></defs><rect width="1030" height="830" rx="20" fill="#f6f8fc"/><g font-family='system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif' fill="#172b43">
+<text x="515" y="44" text-anchor="middle" font-size="27" font-weight="700" fill="#172b43">配置值怎样到达它的终点</text>
+<text x="260" y="93" text-anchor="middle" font-size="23" font-weight="700" fill="#217a69">记录路径</text>
+<text x="765" y="93" text-anchor="middle" font-size="23" font-weight="700" fill="#3267a8">硬件管理路径</text>
+<rect x="50" y="120" width="420" height="97" rx="12" fill="#edf8f4" stroke="#b4d9cb" stroke-width="2"/>
+<text x="260.0" y="162.5" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">内存中的记录结构体</text>
+<text x="260.0" y="188.5" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">期望值 / 缓存值 / 描述</text>
+<rect x="560" y="120" width="420" height="97" rx="12" fill="#eef4fe" stroke="#b8cae2" stroke-width="2"/>
+<text x="770.0" y="162.5" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">MCU Software + UMSD API</text>
+<text x="770.0" y="188.5" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">解释端口与配置请求</text>
+<path d="M260 217V261" stroke="#217a69" stroke-width="2.5" fill="none" marker-end="url(#green)"/>
+<path d="M770 217V261" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<rect x="50" y="261" width="420" height="97" rx="12" fill="#edf8f4" stroke="#b4d9cb" stroke-width="2"/>
+<text x="260.0" y="303.5" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">记录组帧</text>
+<text x="260.0" y="329.5" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">序列化并组织数据</text>
+<rect x="560" y="261" width="420" height="97" rx="12" fill="#eef4fe" stroke="#b8cae2" stroke-width="2"/>
+<text x="770.0" y="303.5" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">BSP + Ethernet MCAL</text>
+<text x="770.0" y="329.5" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">ReadMii / WriteMii 适配</text>
+<path d="M260 358V402" stroke="#217a69" stroke-width="2.5" fill="none" marker-end="url(#green)"/>
+<path d="M770 358V402" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<rect x="50" y="402" width="420" height="97" rx="12" fill="#edf8f4" stroke="#b4d9cb" stroke-width="2"/>
+<text x="260.0" y="444.5" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">AUTOSAR RTE</text>
+<text x="260.0" y="470.5" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">发布记录</text>
+<rect x="560" y="402" width="420" height="97" rx="12" fill="#eef4fe" stroke="#b8cae2" stroke-width="2"/>
+<text x="770.0" y="444.5" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">MDIO Controller</text>
+<text x="770.0" y="470.5" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">触发并完成管理事务</text>
+<path d="M260 499V543" stroke="#217a69" stroke-width="2.5" fill="none" marker-end="url(#green)"/>
+<path d="M770 499V543" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<rect x="50" y="543" width="420" height="97" rx="12" fill="#edf8f4" stroke="#b4d9cb" stroke-width="2"/>
+<text x="260.0" y="585.5" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">上层记录接收方</text>
+<text x="260.0" y="611.5" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">得到一份记录</text>
+<rect x="560" y="543" width="420" height="97" rx="12" fill="#eef4fe" stroke="#b8cae2" stroke-width="2"/>
+<text x="770.0" y="585.5" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">MDC / MDIO → Switch</text>
+<text x="770.0" y="611.5" text-anchor="middle" font-size="17" font-weight="400" fill="#172b43">访问寄存器与表单元</text>
+<text x="260" y="685" text-anchor="middle" font-size="20" font-weight="600" fill="#217a69">证明记录已形成或发布</text>
+<text x="770" y="685" text-anchor="middle" font-size="20" font-weight="600" fill="#3267a8">按 API 契约确认访问结果</text>
+<rect x="165" y="730" width="700" height="68" rx="12" fill="#fff" stroke="#c9d5e5" stroke-width="2"/>
+<text x="515.0" y="771.0" text-anchor="middle" font-size="20" font-weight="600" fill="#172b43">成功读回 + 采样时间 + 状态 → 硬件观测记录</text>
+<path d="M770 640V710H820V730" stroke="#3267a8" stroke-width="2.5" fill="none" marker-end="url(#arrow)" stroke-dasharray="7 5"/>
+<text x="515" y="819" text-anchor="middle" font-size="16" font-weight="400" fill="#546b85">结构体赋值和 RTE 发布本身，不会自动建立寄存器写操作</text>
+</g></svg>

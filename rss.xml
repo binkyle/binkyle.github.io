@@ -1,0 +1,1297 @@
+<?xml version="1.0" encoding="utf-8"?><?xml-stylesheet type="text/xsl" href="https://binkyle.github.io/rss.xsl"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <atom:link href="https://binkyle.github.io/rss.xml" rel="self" type="application/rss+xml"/>
+    <title>孤星旅记</title>
+    <link>https://binkyle.github.io/</link>
+    <description>Bin 的工程探索与个人记录。沿着 AUTOSAR、车载网络与底层系统的脉络，在复杂系统中寻找秩序。</description>
+    <language>zh-CN</language>
+    <pubDate>Thu, 15 Oct 2026 14:04:51 GMT</pubDate>
+    <lastBuildDate>Thu, 15 Oct 2026 14:04:51 GMT</lastBuildDate>
+    <generator>@vuepress/plugin-feed</generator>
+    <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+    <category>车载通信与网络</category>
+    <category>嵌入式系统与 AUTOSAR</category>
+    <category>编程与软件工程</category>
+    <category>阅读与思考</category>
+    <item>
+      <title>车载 Switch 配置的生效机制：固件初始化、UMSD 与 MDIO 管理链路</title>
+      <link>https://binkyle.github.io/blog/Ethernet/Switch/configuration-mdio.html</link>
+      <guid>https://binkyle.github.io/blog/Ethernet/Switch/configuration-mdio.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">车载 Switch 配置的生效机制：固件初始化、UMSD 与 MDIO 管理链路</source>
+      <description>区分 XML 离线配置、固件初始化、UMSD/MCAL 管理访问与 RTE 记录上报，计算 MDIO 事务开销，并介绍配置冲突的只读验证方法。</description>
+      <category>车载通信与网络</category>
+      <pubDate>Wed, 14 Oct 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>Switch 的运行状态由已经完成的初始化和管理操作共同形成。XML 描述期望配置，C 代码表达软件动作，运行时寄存器与表项反映当前硬件状态。<strong>看见配置值、找到 API 名称和确认配置已经生效，是三件不同的事。</strong> 沿着配置消费、构建、执行、硬件访问和读回建立连续关系，才能解释它们之间的差异。</p>
+<p>本文是<a href="/blog/Ethernet/Switch/" target="_blank">车载以太网 Switch 专栏</a>的第三篇，结合<a href="/blog/Ethernet/Switch/hardware-architecture.html" target="_blank">硬件连接</a>与<a href="/blog/Ethernet/Switch/vlan-forwarding.html" target="_blank">二层转发</a>，说明配置生效、UMSD/MDIO 管理与 AUTOSAR 集成。所有代码均为自行构造的示意代码，不引用内部驱动、配置原件或专有寄存器序列。</p>
+<h2>1. 上电后，谁把端口配置好</h2>
+<p>Switch 一般先经历供电、参考时钟稳定、复位释放、Strap 采样和硬件默认初始化。随后怎样建立端口与转发表，取决于芯片和系统：有的器件依赖外部主机，有的具备内部处理器与固件，有的可以读取非易失性配置。</p>
+<p>| 阶段或来源 | 可能承担的工作 | 不能直接推出的结论 |<br>
+|</p>
+]]></content:encoded>
+      <enclosure url="https://binkyle.github.io/assets/switch/management-paths.svg" type="image/svg+xml"/>
+    </item>
+    <item>
+      <title>车载以太网交换芯片架构：从 MAC、PHY 到 RGMII 与 SerDes</title>
+      <link>https://binkyle.github.io/blog/Ethernet/Switch/hardware-architecture.html</link>
+      <guid>https://binkyle.github.io/blog/Ethernet/Switch/hardware-architecture.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">车载以太网交换芯片架构：从 MAC、PHY 到 RGMII 与 SerDes</source>
+      <description>以虚拟车载网络解释 GMAC 与 Switch 的分工、PHY 的内部层次，以及 RGMII、SGMII、SerDes 和 T1 铜缆接口的连接边界。</description>
+      <category>车载通信与网络</category>
+      <pubDate>Wed, 14 Oct 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>车载以太网交换芯片连接传感器、计算节点和控制节点，完成端口间报文转发。理解它的硬件架构，需要同时看清三个对象：<strong>MAC 处理以太网帧，PHY 实现物理链路，Switch 连接多个端口并决定帧的出口。</strong> RGMII、SGMII 和高速 SerDes 则处于不同的连接边界，不能仅根据接口名字判断网线怎样接。</p>
+<p>本文是<a href="/blog/Ethernet/Switch/" target="_blank">车载以太网 Switch 专栏</a>的第一篇。这里先建立连接模型，<a href="/blog/Ethernet/Switch/vlan-forwarding.html" target="_blank">第二篇</a>讨论一帧报文的转发，<a href="/blog/Ethernet/Switch/configuration-mdio.html" target="_blank">第三篇</a>讨论管理与配置生效。</p>
+<h2>1. GMAC 与 Switch 的分工</h2>
+<p>MCU 集成 Gigabit Ethernet MAC，意味着它能够收发自身的以太网帧。典型收发路径中，MAC 与 DMA、描述符、缓冲区和中断配合，把网络数据交给 MCU 软件，或者将软件准备好的数据送入链路。</p>
+<p>Switch 面向多个端口：从某个端口接收帧，根据 VLAN、目的 MAC、端口状态及策略，选择一个或多个出口。多个 DMA 队列仍是同一网络接口内部的资源，不会自动变成多个可接传感器的物理端口。</p>
+<p>Infineon 的 TC3xx GETH 公开培训资料列出了 10/100/1000 Mbit/s MAC、MII/RMII/RGMII、DMA 队列及过滤能力。[1] 这说明 GETH 可以为 MCU 提供网络连接；是否具有独立的多端口交换能力，要看芯片的交换结构，不能由“有 MAC”或“有 VLAN 过滤”推出。</p>
+<p>| 对象 | 主要职责 | 典型连接 |<br>
+|</p>
+]]></content:encoded>
+      <enclosure url="https://binkyle.github.io/assets/switch/hardware-topology.svg" type="image/svg+xml"/>
+    </item>
+    <item>
+      <title>一帧以太网报文如何穿过 Switch：VLAN、VTU、FID 与 ATU 转发机制</title>
+      <link>https://binkyle.github.io/blog/Ethernet/Switch/vlan-forwarding.html</link>
+      <guid>https://binkyle.github.io/blog/Ethernet/Switch/vlan-forwarding.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">一帧以太网报文如何穿过 Switch：VLAN、VTU、FID 与 ATU 转发机制</source>
+      <description>用一帧虚拟传感器报文串起 VLAN 分类、VTU/FID、MAC 学习、ATU 查找、端口过滤和出口 Tag 处理，解释转发与丢帧条件。</description>
+      <category>车载通信与网络</category>
+      <pubDate>Wed, 14 Oct 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>以太网帧进入 Switch 后，会先获得交换机内部使用的 VLAN 身份，再经过成员关系、目的地址和端口策略的共同筛选，最终形成出口集合。<strong>PVID 负责默认分类，VTU 维护 VLAN 关系，FID 选择地址数据库，ATU/FDB 提供目的地址到端口的映射。</strong> 它们各自解决不同问题，只有组合起来才能解释一帧报文的完整去向。</p>
+<p>本文承接<a href="/blog/Ethernet/Switch/hardware-architecture.html" target="_blank">硬件架构与接口</a>，用匿名化虚拟网络展开二层转发。<a href="/blog/Ethernet/Switch/configuration-mdio.html" target="_blank">配置与 MDIO 管理</a>会继续说明如何确认这些规则已经写入硬件。</p>
+<p>文中 VTU、ATU 和 802.1Q Mode 使用 Marvell 部分交换芯片家族常见的名称。它们有助于理解实现，但不代表所有 Switch 都具有相同单元、寄存器布局或模式细节。以下步骤是逻辑分析顺序，不是对某颗芯片内部流水线级数的断言。</p>
+<h2>1. 虚拟网络与一帧输入</h2>
+<p>所有参数均为演示数据。MAC 使用本地管理的单播地址，不来自实际设备。假设链路正常、端口处于 Forwarding、没有额外的 ACL/TCAM 重定向或丢弃规则。</p>
+<p>| 端口 | 虚拟节点 | MAC 地址 | 接口上的业务 |<br>
+|</p>
+]]></content:encoded>
+      <enclosure url="https://binkyle.github.io/assets/switch/forwarding-flow.svg" type="image/svg+xml"/>
+    </item>
+    <item>
+      <title>嵌入式堆栈使用量测量：Stack Painting、High-Water Mark 与溢出监控</title>
+      <link>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/stack-measurement.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/stack-measurement.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">嵌入式堆栈使用量测量：Stack Painting、High-Water Mark 与溢出监控</source>
+      <description>从栈内存模型出发，理解填充与历史水位，连接 Guard、AUTOSAR OS 查询和可独立运行的 C99 Stack Observer，形成可验证的栈容量与安全裕度观测方法。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Sat, 10 Oct 2026 03:09:27 GMT</pubDate>
+      <content:encoded><![CDATA[<p>CPU 时间与栈空间是嵌入式软件的两项基础资源。<a href="/blog/Autosar/RuntimeMeasurement/cpu-load.html" target="_blank">CPU Load</a>描述一个核在窗口内的工作比例，Stack Measurement 则记录任务、中断和系统执行路径对栈空间的历史需求。把两类指标放在一起，可以同时观察执行预算与内存裕度。</p>
+<p>本文从栈的基本模型讲起，介绍 Stack Painting 和 High-Water Mark，再连接边界监控、TC397/AUTOSAR 接入与开源实现。配套的 <a href="https://github.com/binkyle/autosar-module-lab/tree/main/embedded-runtime-observer" target="_blank" rel="noopener noreferrer">Stack Observer</a> 已完成 Host 测试；目标平台的编译、调用权限和硬件对照分别验证。</p>
+<h2>1. 栈测量与容量规划</h2>
+<p>栈容量由配置与链接布局决定，运行需求则随调用深度、局部变量、编译优化、中断嵌套及执行路径变化。历史峰值为容量选择提供运行证据，剩余裕度帮助安排后续功能与压力场景。</p>
+<p>一份可解释的结果应同时带上容量、峰值、单位、统计对象和有效性。例如：</p>
+<p>| 指标 | 模拟值 | 含义 |<br>
+|</p>
+]]></content:encoded>
+      <enclosure url="https://binkyle.github.io/assets/rtm/rtm_stack_layout.svg" type="image/svg+xml"/>
+    </item>
+    <item>
+      <title>TC397 与 AUTOSAR 的运行时测量接入</title>
+      <link>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/autosar-integration.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/autosar-integration.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">TC397 与 AUTOSAR 的运行时测量接入</source>
+      <description>将 STM、Task Hook、ISR 边界和每核快照接入通用 Runtime Measurement 核心，形成可复现模型与分阶段的目标验证流程。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Fri, 09 Oct 2026 10:00:27 GMT</pubDate>
+      <content:encoded><![CDATA[<p>通用测量核心与 ECU 工程之间的连接集中在平台适配层：它识别实际执行者，读取 STM 时间，形成串行事件，并把统计副本交给报告路径。</p>
+<p>对于 TC397 与 AUTOSAR，可以按“Host 模型 → 时间源 → 调度和中断边界 → 周期采样 → 多核发布 → 目标验证”的顺序完成接入。各步骤分别建立一项明确的契约，组合后得到可解释的每核时间账本。</p>
+<p>本文使用<a href="https://github.com/binkyle/autosar-module-lab/tree/main/embedded-runtime-observer" target="_blank" rel="noopener noreferrer">配套模块</a>中的独立 Hook 模型讲解接口。C99 核心与 Mock 示例已通过 Host 验证；具体 MICROSAR/TASKING/TC397 接入处于 Experimental / Unverified，目标参数和实际 Hook 顺序由工程配置确定。</p>
+<h2>1. 建立可复现的 Host 基线</h2>
+<p>克隆仓库，进入模块目录：</p>
+<div class="language-sh line-numbers-mode" data-highlighter="shiki" data-ext="sh" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-sh"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> clone</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> https://github.com/binkyle/autosar-module-lab.git</span></span>
+<span class="line"><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">cd</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> autosar-module-lab/embedded-runtime-observer</span></span>
+<span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">make</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> test</span></span>
+<span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">./build/autosar_concept</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>输出：</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>Mock hooks: task=30 kernel=4 ISR=10 idle=56 load=44.0%</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><p>这个模型显式记录 30 ticks Task、10 ticks ISR 和 4 ticks 调度空档，共 44 ticks Busy。Kernel 在这里表示已标注的 Post/Pre 之间空档。模型为真实适配提供一组稳定的输入和期望值。</p>
+<p>模块还提供基础负载、嵌套 ISR、多核、Mock 寄存器、栈模拟和 OS 栈查询示例。接入过程中可以对照它们，逐项确认平台事件与核心语义一致。</p>
+<h2>2. 配置每核上下文和 ID 映射</h2>
+<p>每个逻辑核分配独立的 <code>rtm_core_t</code>，由该核执行事件更新和快照复制。适配层建立 Task ID、ISR/RTM Point ID 与观测 ID 的查表映射，并为 Idle 和已覆盖的调度空档使用专用标识。</p>
+<p>| 平台信息 | 映射到核心 |<br>
+|</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>嵌入式 CPU 负载测量：Task、Idle 与 ISR</title>
+      <link>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/cpu-load.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/cpu-load.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">嵌入式 CPU 负载测量：Task、Idle 与 ISR</source>
+      <description>以每核执行时间为主线，建立 Task、Idle、ISR 与调度空档的统一模型，说明中断嵌套、固定窗口和 CPU Load 的计算方法。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Fri, 09 Oct 2026 10:00:27 GMT</pubDate>
+      <content:encoded><![CDATA[<p>CPU 负载描述一个核在统计窗口内用于执行工作的时间比例。把任务调度与中断处理放到同一条时间线上，就能同时解释负载百分比、任务占用和 ISR 开销。</p>
+<p>以 100 ms 为例：Task 执行 20 ms，ISR 执行 10 ms，Idle 执行 70 ms，CPU Load 为 30%。这里的关键是将每段物理时间分配给它的实际执行者，再在统一窗口内汇总。</p>
+<p>本文是<a href="/blog/Autosar/RuntimeMeasurement/" target="_blank">运行时测量专题</a>的第一篇，先建立时间模型。<a href="/blog/Autosar/RuntimeMeasurement/framework.html" target="_blank">第二篇</a>将模型实现为 C99 核心，<a href="/blog/Autosar/RuntimeMeasurement/autosar-integration.html" target="_blank">第三篇</a>介绍平台接入。</p>
+<p><a href="/blog/Autosar/RuntimeMeasurement/stack-measurement.html" target="_blank">栈资源观测</a>沿用明确对象、单位和有效性的思路，进一步记录 Task/ISR 的历史内存需求。</p>
+<h2>1. 统一的时间分类</h2>
+<p>在一个核上，当前执行者可以归入 Task、Idle、ISR，或者已明确标注的调度空档。四类采用相同的计时单位和统计范围：</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>Total = Task + Idle + ISR + Kernel</span></span>
+<span class="line"><span>Busy  = Total - Idle</span></span>
+<span class="line"><span>CPU Load = Busy / Total × 100%</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>| 指标 | 统计对象 | 使用方式 |<br>
+|</p>
+]]></content:encoded>
+      <enclosure url="https://binkyle.github.io/assets/rtm/rtm_idle_isr_timeline.svg" type="image/svg+xml"/>
+    </item>
+    <item>
+      <title>轻量级 Runtime Measurement 框架设计</title>
+      <link>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/framework.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/framework.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">轻量级 Runtime Measurement 框架设计</source>
+      <description>以显式事件、每核状态与复制式快照构建 C99 时间核心，并在同一框架中独立扩展 Stack Observer 的容量与水位观测。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Fri, 09 Oct 2026 10:00:27 GMT</pubDate>
+      <content:encoded><![CDATA[<p>运行时测量可以分成三个职责：平台产生执行事件，核心维护时间归属，报告路径输出统计结果。显式的分工使同一个算法可以在 PC、裸机和 RTOS 环境中运行。</p>
+<p><code>embedded-runtime-observer</code> 采用 C99 和静态内存实现这一模型。Task、Idle、ISR、调度空档和函数点共用明确的事件边界，在线统计与可选 Trace 各自保留输出状态。v0.2.0 增加独立 Stack Observer，将栈内存需求接入同一报告层。</p>
+<p>本文承接<a href="/blog/Autosar/RuntimeMeasurement/cpu-load.html" target="_blank">时间模型</a>，沿着事件进入核心后的处理过程介绍框架设计。</p>
+<h2>1. 事件驱动的分层结构</h2>
+<figure><img src="/assets/rtm/rtm_architecture.svg" alt="时间核心与独立 Stack Observer 的采集、统计和副本报告分层" tabindex="0" loading="lazy"><figcaption>时间核心与独立 Stack Observer 的采集、统计和副本报告分层</figcaption></figure>
+<p>平台层提供 Timer、核 ID、任务映射、Hook 和临界区。核心接受显式时间戳：</p>
+<div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">rtm_task_switch</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">core</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, now, task_id);</span></span>
+<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">rtm_isr_enter</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">core</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, now, isr_id);</span></span>
+<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">rtm_isr_exit</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">core</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, now, isr_id);</span></span>
+<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">rtm_point_begin</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">core</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, now, point_id);</span></span>
+<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">rtm_point_end</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">core</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, now, point_id);</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>每次事件先把旧执行上下文累计到 <code>now</code>，再更新状态。旧执行者拥有边界之前的时间，新执行者从边界开始运行。这个顺序让时间分区与状态转换保持一致。</p>
+<p>Mock Clock 可以将输入固定为 10、20、30、50 等数值，独立验证结果。硬件读时钟、OS 接口和统计输出由各自适配层完成，核心接口保持稳定。</p>
+<h2>2. 每核执行上下文与 ISR 栈</h2>
+<p>每个核拥有独立的 <code>rtm_core_t</code>。Task、Idle 或 Kernel 是底层执行者，ISR 调用栈保留中断期间的嵌套关系。</p>
+<p>| 事件 | 时间结算 | 状态更新 |<br>
+|</p>
+]]></content:encoded>
+      <enclosure url="https://binkyle.github.io/assets/rtm/rtm_architecture.svg" type="image/svg+xml"/>
+    </item>
+    <item>
+      <title>跨核不是缓存问题：从 AUTOSAR COM Deferred EventCache 看事件与状态一致性</title>
+      <link>https://binkyle.github.io/blog/Autosar/autosar_com_cross_core_deferred_eventcache_consistency.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/autosar_com_cross_core_deferred_eventcache_consistency.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">跨核不是缓存问题：从 AUTOSAR COM Deferred EventCache 看事件与状态一致性</source>
+      <description>从可构造的双核交错分析事件与状态的不一致，区分缓存可见性、原子性、顺序与跨核互斥。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Fri, 09 Oct 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>多核嵌入式开发里有一种容易产生误判的现象：<strong>共享变量放在 NonCached RAM，读写都是简单赋值，两边也都进入了 SchM Exclusive Area，但事件队列和业务状态仍可能不一致。</strong></p>
+<p>这里不需要先假设硬件缓存出错。更值得追问的是：</p>
+<blockquote>
+<p><strong>“事件已发布”与“事件对应的数据已就绪”，是不是同一个不可分割的状态转换？</strong></p>
+</blockquote>
+<p>本文以 AUTOSAR Classic COM 的一种 <strong>Deferred Rx + EventCache</strong> 实现为例，借助一个可构造的双核交错，讨论缓存可见性、原子性、内存顺序与跨核互斥之间的区别，以及事件驱动系统该怎样维护状态不变量。</p>
+<p>文中的代码是根据实际函数关系抽象的<strong>示意性伪代码</strong>，不是 AUTOSAR 对所有 COM 实现的统一规定。具体项目还应遵循所使用组件的多核部署和并发访问约束。</p>
+<!-- more -->
+<h2>1. Deferred Rx：接收与处理为什么要分开？</h2>
+<p>对于一条 Rx I-PDU，通信栈可能采用如下链路：</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>Core0 / 接收上下文</span></span>
+<span class="line"><span>  CAN Rx → CanIf → PduR / SecOC → Com_RxIndication()</span></span>
+<span class="line"><span>                                        │</span></span>
+<span class="line"><span>                                        ├─ 将 PDU 编号加入 EventCache</span></span>
+<span class="line"><span>                                        ├─ 将报文复制到 Deferred Buffer</span></span>
+<span class="line"><span>                                        └─ 设置 Pending Length</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Core3 / 周期任务</span></span>
+<span class="line"><span>  Com_MainFunctionRx()</span></span>
+<span class="line"><span>       │</span></span>
+<span class="line"><span>       ├─ 从 EventCache 取出 PDU 编号</span></span>
+<span class="line"><span>       ├─ 检查 PDU Active 与 Pending Length</span></span>
+<span class="line"><span>       ├─ 解析信号并写入 COM Signal Buffer</span></span>
+<span class="line"><span>       └─ 退出临界区后分发 Notification → RTE</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>Deferred 的目的不是逐帧保存所有历史报文，而是将接收上下文中的工作量控制住，再由周期任务完成更重的解析与通知。</p>
+<p>这里实际存在<strong>三个不同的对象</strong>：</p>
+<p>| 对象 | 保存什么 | 解决什么问题 |<br>
+|</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>从 .c 到 .a 再到 ELF：TC397 + TASKING 静态库生产与链接全流程</title>
+      <link>https://binkyle.github.io/blog/Autosar/TC397_TASKING_Static_Library_From_Source_To_ELF.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/TC397_TASKING_Static_Library_From_Source_To_ELF.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">从 .c 到 .a 再到 ELF：TC397 + TASKING 静态库生产与链接全流程</source>
+      <description>沿着 .c、.o、.a 与 ELF 追踪编译、归档、链接和集成契约，厘清库的生产与使用边界。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Wed, 30 Sep 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>在嵌入式工程里，经常会遇到两种静态库场景：</p>
+<ul>
+<li><strong>作为 Producer</strong>：把自己的源码编译成 <code>.a</code>，交给其他团队或第三方集成；</li>
+<li><strong>作为 Consumer</strong>：拿到供应商提供的 <code>.a</code>，再链接进自己的 ECU 工程。</li>
+</ul>
+<p>两种场景其实是同一条构建链的两端。</p>
+<p>本文结合 <strong>TC397 + TASKING + AUTOSAR Classic</strong> 工程，完整梳理：</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>.c</span></span>
+<span class="line"><span> │</span></span>
+<span class="line"><span> │ Compile</span></span>
+<span class="line"><span> ▼</span></span>
+<span class="line"><span>.o</span></span>
+<span class="line"><span> │</span></span>
+<span class="line"><span> │ Archive</span></span>
+<span class="line"><span> ▼</span></span>
+<span class="line"><span>.a</span></span>
+<span class="line"><span> │</span></span>
+<span class="line"><span> │ Link</span></span>
+<span class="line"><span> ▼</span></span>
+<span class="line"><span>ELF</span></span>
+<span class="line"><span> │</span></span>
+<span class="line"><span> ▼</span></span>
+<span class="line"><span>HEX / ECU</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>重点不是某一个具体库，而是理解 <strong>Compile、Archive、Link</strong> 三个阶段分别做了什么，以及一个嵌入式静态库真正要能够被第三方使用，需要满足哪些条件。</p>
+<!-- more -->
+<h2>1. Compile、Archive、Link 是三件不同的事</h2>
+<p>很多人第一次接触静态库时，会把“编译一个库”理解成：</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>源码 → libxxx.a</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><p>实际过程应该拆成：</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>Source</span></span>
+<span class="line"><span>  │</span></span>
+<span class="line"><span>  │ Compiler</span></span>
+<span class="line"><span>  ▼</span></span>
+<span class="line"><span>Relocatable Object</span></span>
+<span class="line"><span>  │</span></span>
+<span class="line"><span>  │ Archiver</span></span>
+<span class="line"><span>  ▼</span></span>
+<span class="line"><span>Static Library</span></span>
+<span class="line"><span>  │</span></span>
+<span class="line"><span>  │ Linker</span></span>
+<span class="line"><span>  ▼</span></span>
+<span class="line"><span>Executable Image</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>在 TASKING TriCore 工具链中，可以对应为：</p>
+<p>| 阶段 | 工具 | 作用 |<br>
+|</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>C语言中的Base/Derived模式：用结构体组合实现继承、类型擦除与受控向下转型</title>
+      <link>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/C%E8%AF%AD%E8%A8%80Base-Derived%E6%A8%A1%E5%BC%8F.html</link>
+      <guid>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/C%E8%AF%AD%E8%A8%80Base-Derived%E6%A8%A1%E5%BC%8F.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">C语言中的Base/Derived模式：用结构体组合实现继承、类型擦除与受控向下转型</source>
+      <description>用结构体组合连接继承式复用、类型擦除与受控向下转型，解释底层 C 软件中常见的对象模式。</description>
+      <category>编程与软件工程</category>
+      <pubDate>Tue, 29 Sep 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>C 语言没有 C++ 那样的 class、继承和虚函数，但在操作系统、驱动、AUTOSAR、Linux 内核等底层软件中，经常可以看到一种很成熟的写法：</p>
+<blockquote>
+<p>把“基类结构体”嵌入“派生结构体”，再通过基类指针复用公共逻辑；需要具体能力时，再受控地恢复为派生类型。</p>
+</blockquote>
+<p>这种模式可以理解为 <strong>C 语言中的组合式继承（struct embedding）+ 类型擦除（type erasure）+ 运行时类型恢复</strong>。</p>
+<!-- more -->
+<h2>1. 最小模型</h2>
+<p>先看一个最简单的例子：</p>
+<div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">typedef</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492"> enum</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">{</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">    OBJ_SPINLOCK,</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">    OBJ_RESOURCE</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">} ObjectType;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">typedef</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492"> struct</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">{</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">    ObjectType type;</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">} BaseConfig;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">typedef</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492"> struct</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">{</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">    BaseConfig base;</span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">    unsigned</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492"> int</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> order;</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">} SpinlockConfig;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">typedef</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492"> struct</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">{</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">    BaseConfig base;</span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">    unsigned</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492"> int</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> ceiling;</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">} ResourceConfig;</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这里：</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>BaseConfig</span></span>
+<span class="line"><span>    ▲</span></span>
+<span class="line"><span>    │ 作为成员嵌入</span></span>
+<span class="line"><span>    │</span></span>
+<span class="line"><span>SpinlockConfig</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>BaseConfig</span></span>
+<span class="line"><span>    ▲</span></span>
+<span class="line"><span>    │</span></span>
+<span class="line"><span>ResourceConfig</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>并不是 C++ 语法意义上的继承，但从设计目的上，它已经具备了继承的几个核心效果：</p>
+<ul>
+<li>公共字段只定义一次；</li>
+<li>公共算法只面向 Base 类型；</li>
+<li>Spinlock / Resource 可以保留各自特有字段；</li>
+<li>必要时可以根据类型标签重新识别具体对象。</li>
+</ul>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>《炒股的智慧》读书笔记</title>
+      <link>https://binkyle.github.io/blog/investment/%E7%82%92%E8%82%A1%E7%9A%84%E6%99%BA%E6%85%A7.html</link>
+      <guid>https://binkyle.github.io/blog/investment/%E7%82%92%E8%82%A1%E7%9A%84%E6%99%BA%E6%85%A7.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">《炒股的智慧》读书笔记</source>
+      <description>关于交易规则、风险与心理建设的阅读摘录及个人整理。</description>
+      <category>阅读与思考</category>
+      <pubDate>Mon, 01 Jul 2024 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>《炒股的智慧》读书笔记</p>
+<!-- more -->
+<h2>引言</h2>
+<ul>
+<li>
+<p>因为赚钱时，你不知自己为何赚了钱，你不知下次要怎么办才能重复赚钱的经历；亏钱时，你不明白自己为何亏了钱，下次要怎么做才能防止亏钱的再次发生。我希望你能在这本书中找到解决这些问题的答案。</p>
+</li>
+<li>
+<p>朋友，你开始看这本书，准备玩全世界最刺激的游戏并要成为专家时，我要给你这样的忠告：不要怕，也不要悔；玩游戏之前，先搞清游戏的规则，面对人为操纵的赌局，一定要摸清对方的心理；最后提醒你，小偷的本事不在偷，而在于危急的时候怎么逃。</p>
+</li>
+<li>
+<p>何以一般股民败多胜少，那就是：人性使然！说的全面些，就是这些永远不变的人性——讨厌风险、急着发财、自以为是、赶潮跟风、因循守旧和耿于报复</p>
+</li>
+<li>
+<p>我慢慢感悟这些聪明人失败的原因大约有两个：一、炒股的技能太活了；二，他们太聪明，选择太多。</p>
+</li>
+<li>
+<p>“贪”是人性，“不贪”是经验。</p>
+</li>
+<li>
+<p>你们选择太多，所以成功的机会不大。</p>
+</li>
+<li>
+<p>股票的迷惑性不在于股票所基于的价值，而在于它给炒股者提供的幻想。</p>
+</li>
+<li>
+<p>股市这一恒久的赌局却要求你每时每刻都要做理性的决定且为决定的结果负全部的责任！这就淘汰了一大部分股民，因为他们没有办法长期承担这样的心理压力。</p>
+</li>
+<li>
+<p>这一恒久变动的股市还有一致命的特点：它能使你亏掉较预期多得多的</p>
+</li>
+<li>
+<p>使股民蒙受超出预期损失的第二个原因则是人性中的吃不得小亏的心理，具体分析见下节</p>
+</li>
+<li>
+<p>这种赚大钱的可能以及挣了大钱后对你的生活方式、虚荣心及权力的幻 想，是极其危险的</p>
+</li>
+<li>
+<p>你常常面对两个选择，即选择正确或选择赚钱，在股市，它们常常并不同步。</p>
+</li>
+<li>
+<p>句话，股市没有即定的运行准则</p>
+</li>
+<li>
+<p>这一方面是人性中亏不起的心态，另一方面是报复赌场，报复赌场让他们亏钱。</p>
+</li>
+</ul>
+<h3>环境</h3>
+<h4>大环境</h4>
+<ul>
+<li>1．利率</li>
+<li>2．税收</li>
+<li>3．汇率</li>
+<li>4．银根松紧</li>
+<li>5．经济周期</li>
+<li>6．通货膨胀</li>
+<li>7．政治环境</li>
+<li>8、政府的产业政策</li>
+</ul>
+<h4>小环境</h4>
+<ul>
+<li>1．营业收入</li>
+<li>2．盈利</li>
+<li>3．固定资产</li>
+<li>4．类似公司的情况</li>
+<li>5．品牌的价值</li>
+</ul>
+<p>大环境的变化是谈天的好材料，用来炒股的实用性不大。大的政治动乱和经济震荡当然例外。</p>
+<h2>影响股票的三个因素</h2>
+<p>1.盈利的增长</p>
+<p>2.新产品</p>
+<p>3.公司回购自己的股票</p>
+<h2>股票的走势及走势线</h2>
+<ul>
+<li>在升势图中，请注意交易量的变化。在上升阶段，交易量增加，下调阶段，交易量减少。</li>
+<li>典型的跌势图</li>
+<li>在跌势时，交易量没有特别之处，但跌波的每个波峰较上一波峰为低，波谷也较上一波谷为低。</li>
+<li>无势图</li>
+<li>一只无势的股票通常不适合炒作。</li>
+<li>影响投资者决定的最重要因素是对未来的预期。</li>
+<li>股票的运动有点像推石球上山，要往上推，你要很大的力，但石球往下 滚，用不着很多力气。</li>
+<li>华尔街有过调查，使一般投资者入场买股票的原因最主要的就是因为股票在升！</li>
+<li>一般投资者入场买股票主要不是因为股票的成本收益比率低或红利高，而是因为股票在升！升！升！ 除了股票在升的理由之外，其它因素都是次要的。这就是为什么股票一开始升势，它往上一波高过一波，不会马上停止。要想学习养成对股票运动的感觉，你必须牢牢记住这一点。</li>
+<li>现在你能体会到为什么股票升时常常升得离谱，跌时跌到惨不忍睹的原因了吧？记住股民买卖股票的真正原因，耐心地观察市场，你很快就会发现股票运动是有迹可循的。</li>
+<li>2．支撑线和阻力线</li>
+<li>3．双肩图和头肩图</li>
+<li>4．平均线</li>
+<li>我自己习惯用200天平均线来衡量股票的长期走势，50天平均线来衡量中期走势。</li>
+<li>股票短期的运动方向我注重股价及交易量。</li>
+<li>我通常不买股价在200天平均线下的股票，做短线时例外</li>
+</ul>
+<h2>综合看图</h2>
+<ul>
+<li>把图2-10倒过来，我们就有了最常见的买入理想点。记住如果这是升势开始的话，交易量通常增大</li>
+<li>支撑线和阻力线：一旦阻力线被突破，股票应该继续上升，虽然可能有反调，便反调不应该跌到阻力线之下，否则便是不正常运动。同样，一旦支撑线被突破，股票应往下跌，否则的话，便是不正常运动。如果股票一跌破支撑线便反弹到支撑线之上，可能是买股的好时机。</li>
+<li>以下我简单地解释经济周期怎样在股价上反映出来。这些知识能加深你对股市的认识（</li>
+<li>。必须强调，股市操纵可能改变每天的或短期的波动，但不可能改变大势。 道氏理论特点指出这一点</li>
+<li>马克思的政治经济学主要目的便是解决不断重复的资本广义经济周期对社会负面的影响。</li>
+<li>由于我自己以中短期炒作为主，技术分析是我买进卖出的主要参考。</li>
+<li>不要把技术分析孤立起来看。</li>
+<li>股票大市的重要性的：“炒股的诀窍便是在牛市中全力投入，在牛市结束或接近结束的时候卖掉你的所有股票。</li>
+<li>要确定大市的走向，最重要的是每天要追踪股票指数的运动</li>
+<li>留意每天的交易总量。如果股市交易总量很大，但指数不升，或开市走 高，收市低收盘，这就给你危险信号了</li>
+<li>判断大市走向是极其重要的</li>
+<li>炒股是概率的游戏，逆大潮流而动，你的获胜概率就被大打折扣了。</li>
+<li>，但一定要在心理上不断提醒自己：大市不好时，别买任何股票。</li>
+<li>综合指数有时会被几只大股票糊弄</li>
+<li>最流行的“现金值法”是怎么判断合理股价的。</li>
+<li>要得到股票的现金值需要2个假设。一个是通货膨胀，另一个是未来盈利</li>
+<li>我们生活在从工业社会转型到信息社会的关口。互联网公司属于信息社会的产业。</li>
+<li>现今流行的企业评估标尺如本利比、现金值、固定资产值等等是用来评估工业社会企业的，它取代了农业社会丈量土地的方法；但它用来评估信息社会的企业可能并不十分合适。</li>
+</ul>
+<h2>成功的要素</h2>
+<ul>
+<li>么投机的原理是什么呢? 它的精华可以浓缩成两句话：(1)败而不倒(2)追求卓越。</li>
+<li>具体的做法就是分层下注</li>
+<li>把“保本”这个概念牢牢地记在心里，你在炒股时每次犯错，你的体会就会深一层，时间一久，你就知道该怎样做了。</li>
+<li>但我常听到炒股的人居然会为亏钱而自豪！这其实便是炒股艰难的地方。看不见、摸不着的股票使一般人的判断力走了样。</li>
+<li>在这里我要强调的是：只要股票运动正常，便必须按兵不动</li>
+<li>你如果有60%的胜算，下注的数额比你有80%的胜算时应该为少。至于你怎么知道有60%的胜算或80%的胜算，完全决定于你自己的经验。</li>
+<li>股票从来不是恒定不动的，它有时很活跃，有时很安静，要么上一下，要么下一点，在一固定的区间波动，一旦股票开始一个新的走势，它通常循着一条比较固定的路径运行。华尔街将这条线称为“最少阻力线”。</li>
+<li>如果读者觉得还很抽象的话，我以下用数字来描述一遍，因为掌握股票正常运动的特点对炒股成功是极其重要的。</li>
+<li>一只正常运动的股票，每次上冲的强度通常较上一次更为猛烈。</li>
+<li>炒股的最基本信条是在任何时候，你手上持有股票的上升潜力必须大过下跌的可能，否则你就不应留在手里。</li>
+<li>但炒友们必须牢牢记住：股市从来都不错，它总是走自己要走的路，会错的只有人自己</li>
+<li>华尔街曾经对一般的股民做过调查，其结果是惊人的：80%的股民入市并非以赚钱为主要目的</li>
+<li>欲望必须由努力做基础，否则只是白日梦，白日梦不是欲望是梦。</li>
+<li>这个世界充满聪明而失意的人，受过良好教育但成日感叹怀才不遇的人，……他们有个共性，缺少锲而不舍的精神</li>
+<li>它是在忍无可忍的时候，再忍下去的毅力！</li>
+<li>最痛苦的不是亏钱的数目，钱亏掉不可怕，可怕的是不知有无本事再赚回来</li>
+<li>成功的秘诀不外乎是“在忍无可忍的时候，再忍一忍”。</li>
+<li>一位成功的炒手必须如一位成功的商人，正确地预见未来的需求，适时进货，耐心地等待盈利的时刻。</li>
+<li>要甘于做孤独者</li>
+<li>但炒股需要不同的思维方式。</li>
+<li>反之如果大多数股民不看好股市，他们都已经脱手出场，那么股市的继续下跌区间也已不大。</li>
+<li>你如果随大流，则你将常常在高点入市，低点出市，你将成为失败者。</li>
+<li>当然，何为大多数股民看好大市或大多数股民不看好大市是很难计量的，你主要通过研究“股势”来得到答案。</li>
+<li>你从小学习的那些讨人喜欢的性格，如听话、合群、不标新立异等等都成为炒股成功的障碍。</li>
+<li>必须具有耐心和自制力</li>
+<li>你不把“苦工”当成习惯，你在这行成功的机会就不大。</li>
+<li>在正确的时间和环境做正确的事才有可能得到预想的效果。</li>
+<li>对业余炒手而言，往往不是没有耐心，也不是不知道危险，他们也知道春天是播种的时机，但问题是他们没有足够的知识和经验判定何时是春天</li>
+<li>大多数人注重于今天发生的一切并假设今天发生的一切会不断延续，但优秀的投资者会看得更远一步，预想在什么情况下今天的情形会停滞甚或产生逆转。</li>
+<li>成功的投资者绝不幻想</li>
+<li>按原来的预想，这只股票的运动不对，你会怎么办？一般人常常想像出各种理由把这一不正常的运动“合理化”。</li>
+<li>要有应用知识的毅力</li>
+<li>因为人们常常做不到自己知道该做的事情！</li>
+<li>在炒股问题上，我是坚信“知易行难”之说的。</li>
+</ul>
+<h2><strong>何时买股票何时卖股票</strong></h2>
+<ul>
+<li>买点的最最重要点是选择止损点。</li>
+<li>这个止损点不应超出投资额的20%。请读者切切牢记，否则这里讲的一切都是空的。</li>
+<li>买股票的依据主要是三点：基础分析、技术分析及大市走向。</li>
+<li>说到底，我差不多就等于在开赌场，每次入场时我的获胜概率都超过50%，而且我只下小注，所以我久赌必赢</li>
+<li>操作技巧</li>
+<li>假如这是一个正常的升势，A、B点分别是波峰和波谷。一旦股价超过A点，便是好的买入点。</li>
+<li>
+<ol start="2">
+<li>阻力线和支撑线的操作</li>
+</ol>
+</li>
+<li>我自己的经验，最有用的概念是阻力线和支撑线，从心理上它们最容易解释，在实际中它们也最为有效</li>
+</ul>
+<h3>买入的要点归纳</h3>
+<ul>
+<li>第一，在买入之前，一定要参照一下股票的走势图，因为它是大众投资心理的反映。</li>
+<li>第二，在买入之前，先定好止损点，搞清楚你最多愿亏多少钱。切记照 办。</li>
+<li>第三，选择临界点，记住你不可能每次正确，所以入场点的获胜概率应大过失败概率。</li>
+<li>第四，最好在升势或突破阻力线，准备开始升势的时候买入。</li>
+<li>第五，绝不要在跌势时入市。</li>
+<li>第六，不要把“股票已跌了很低了”作为买入的理由，你不知道它还会跌多少！</li>
+<li>第七，不要把“好消息”或“专家推荐”作为买的理由，特别在这些好消息公布之前，股票已升了一大截的情况下。</li>
+<li>第八，记住这些要点及点点照办。</li>
+<li>但有一点可以确定，短线操作的资金都是热钱，它不会长久留在某只股票上，除非大户真的认为该股有潜力。</li>
+<li>如果交易量没有增加，突破阻力线的现象并没有很大意义，请读者自己思考一下其中的原由</li>
+<li>只有在交易量增加的前提下，突破阻力线才可以认为股票的运动进入新的阶段。</li>
+<li>大户的花招其实明显的很。讲白了，他们想买进的股票要么静悄悄地，要么想法引起大众的恐慌性抛售，前者你会看到交易量增加，但不明显，股价慢慢地一步步升高，后者便是搞一些大家公认的好卖点</li>
+<li>想像你的对手是谁！如果是大户的话，你炒股大概常亏钱，如果是小股民的话，你大约已赢多过输。</li>
+<li>买股的时机固然重要，买什么股票有同样的分量。</li>
+</ul>
+<h3>选择股票的步骤</h3>
+<ul>
+<li>第一，什么是大市的走向？如果大市不好，你最好什么都别买，安坐不 动。</li>
+<li>第二，哪些类别的股票“牛劲”最足？</li>
+<li>第三，当你判定股票大市属于“牛市”，选好“牛劲”最足的类别股后，余下的工作就是“牛劲”最足的股类中选择一两只“龙头”股</li>
+<li>第三点怎么办？在“牛劲”最足的类别股中，怎样找最有潜力的股票？</li>
+<li>形成自己的风格模式</li>
+<li>用你自己发现的临界点，按自己定好的规则买进卖出，训练自己的耐性，留意市场提供的危险信号，你就走上了学股的正确道路。</li>
+</ul>
+<h3>何时卖股票</h3>
+<ul>
+<li>不要试图寻找股票的最高点，你永远不知股票会升多高。</li>
+<li>和买股票一样，卖股票的点也是“临界点”</li>
+<li>寻找临界点的过程便是你的学股过程</li>
+</ul>
+<h4>小结一下何时及怎样卖股票</h4>
+<ul>
+<li>1．注意危险信号</li>
+<li>2．保本第一</li>
+<li>3．亏小钱</li>
+<li>只要条件允许，越小越好</li>
+<li>我自己喜欢把止损点定在入市当天的最低点。比如我今天以10.75元买进股票，今天的最高价是11元，最低价是10元，我便以10元作为止损点。以我的经验，如果我的入场点选的正确，股票开始上升，它不应跌回我当天入场的最低点。</li>
+<li>4．遇有暴利，拿了再说</li>
+<li>5．小心交易量猛增，股价却不升</li>
+<li>6．用移动止损点来卖股票</li>
+</ul>
+<h2>华尔街家训</h2>
+<ul>
+<li>时刻牢记：市场从来不会错，而你的想法常常是错的。</li>
+<li>止损，止损，止损</li>
+<li>分散风险</li>
+<li>避免买太多股票</li>
+<li>将注意力集中在三至五只最有潜力的股票，随着经验的增加，逐渐将留意的股票增加到十至十五只。我自己的极限是二十只股票。</li>
+<li>有疑问的时候，离场</li>
+<li>忘掉你的入场价</li>
+<li>别频繁交易</li>
+<li>不要向下摊平</li>
+<li>不要向下摊也可用另一种说法：第一次入场后，纸面上没有利润的话不要加码。纸面有利润了，表示你第一次入场的判断正确，那么可以扩大战果，适当加注，否则即刻止损离场，另寻机会。</li>
+<li>就算进价较你第一次进价为低也没有关系。这样做的思想基础不是为了解套，而是你“知道”股票的升势还在继续。</li>
+<li>别让利润变成亏损</li>
+<li>跟着股市走，别跟朋友走！</li>
+<li>别将“股价很低了”当成买的理由，也别将“股价很高了”当成卖的理由！</li>
+<li>别爱上任何股票！</li>
+<li>要在投资领域成功，他相信以下的六点素质是必备的</li>
+<li>第一，你要有点贪念，但不能太多。</li>
+<li>第二，你必须有耐心</li>
+<li>第三，你必须独立思考</li>
+<li>第四，你必须有自信</li>
+<li>第五，不要不懂装懂，要有自知之明。</li>
+<li>第六，对投资的对象可以有弹性</li>
+<li>他列出下面几点作为选择公司的参考。</li>
+<li>：一，我们的投资将基于股票的价值而不是股票是否热门；二，我们的管理将尽量使损失降至最低（有别于股价的短期波动）。</li>
+<li>一位成功投资者的重要素质之一便是市场情况不允许时，离开市场。</li>
+<li>第一，不要第一次就入市太深，从小开始，如果进展顺利，再加码。</li>
+<li>第二，市场是愚蠢的，你也非不着太聪明。</li>
+<li>索罗斯建议投资研究越简化越好。他自己从不在经济研究上花大量的时间，不读华尔街证券行的研究报告。</li>
+<li>。索罗斯认为这一理论根本就是错的。</li>
+<li>他自己提出了“反馈理论”（theory of reflexivity）。这个理论的简单解释便是：想法改变了事件，事件的改变又反过来改变想法。</li>
+<li>我对所有的炒股规则都抱有怀疑，所以很不愿意多谈。但就我的亲身经历，以下的几点或许能帮助你自律：</li>
+<li>1．除非你能将炒股当成全时工作，否则别冒险</li>
+<li>2．对任何给你‘内幕消息’的人士，无论是理发师、美容师还是餐馆跑 堂，都要小心</li>
+<li>3．在你买股票之前，找出公司的所有资料，它的管理层、竞争者，它的盈利及增长的可能性。</li>
+<li>4．别试着在最低点买股、最高点卖股，这是不可能的，除非你撒谎。</li>
+<li>5．学习快速干净地止损。别希望自己每次都正确。如果犯了错，越快止损越好。</li>
+<li>6．别买太多股票，最好只买九只股票，以保证你能够仔细地观察它们。</li>
+<li>7．定期有计划地检查你的投资，看看有什么新的发展可能改变你的想法。</li>
+<li>8．研究税务情况，在卖股时争取最大的税务效益</li>
+<li>9．永远持有一部分现金，不要将钱全部投入股市</li>
+<li>10．不要尝试成为万事通，专心于你了解最多的行业。</li>
+<li>大钱不存在于股票的日常小波动，大钱只存在大势之内。因此你需要判定大势的走向</li>
+<li>我赚到大钱的诀窍不在于我怎么思考，而在于我能安坐不动，坐着不动！</li>
+<li>我只在升势的时候买股票，此时我才觉得舒服。我每多进一手都一定较上一手的价格更高。</li>
+<li>记住，股票从来就没有太高了不能买或太低了不能卖这回事，但进场 后，如果第一手没给你利润，别进第二手。</li>
+<li>所有的专业炒手都不在乎赚钱或亏钱，他们在乎在正确时间做正确的事。他们知道利润会随之而来</li>
+<li>1．确定你对炒手生涯感兴趣</li>
+<li>2．检查你买卖的动机</li>
+<li>3．你的交易方式必须和你的个性相符合</li>
+<li>4．你必须有“胜算”</li>
+<li>5．找一个方法</li>
+<li>6．好的交易方法应毫不费力</li>
+<li>7．风险控制</li>
+<li>8．自律</li>
+<li>9．独立思维和自信</li>
+<li>10．亏损是游戏的一部分</li>
+<li>11．耐心</li>
+<li>12．该出手时就出手</li>
+<li>13．发现压力的根源，解除压力</li>
+<li>14．尊重自己的直觉</li>
+<li>15．价格的变动不是随机的，你能战胜市场</li>
+</ul>
+<h2><strong>怎样在心理上建设自己</strong></h2>
+<ul>
+<li>第一，获得炒股的基本知识； 第二，制定切实可行的炒股计划； 第三，严格按照这个计划实行。</li>
+<li>你对“未随大流”的恐惧和失去“赚大钱”机会的贪婪常使你在股票的最高点入股。</li>
+<li>无论得到什么，得到多少，你总会编出理由来证明你应该得到更多</li>
+<li>一旦怀抱“希望”，你每天都在寻找对你有利的信息，忽略对你不利的信息。</li>
+<li>成功的投资必须基于对今天和未来所发生的事件对股价的可能影响做理性判断，“希望”在这个判断过程中不应占有任何地位。</li>
+<li>什么是正确的心态？</li>
+<li>这些正确的心态至少包括以下几方面：</li>
+<li>1．你要相信自己</li>
+<li>2．诚实地面对自己，评价自己</li>
+<li>3．独立的判断能力</li>
+<li>4．自我督促</li>
+<li>5．改变的能力</li>
+<li>6．热爱你选择的行业</li>
+<li>所见到的大多是玩股的，把炒股当成业余消遣，这些人永远都达不到专业的层次。</li>
+<li>在本书的最后一章“和炒手们谈谈天”里我会较为详细地谈谈学股经历的几个过程。从什么都不懂到有信心不断地从股市赚到钱，我也用了近六年的时间，那还不算我业余炒股的经验及金融硕士的知识背景。所以，你要准备“长期抗战”。</li>
+</ul>
+<h2><strong>抓住大机会</strong></h2>
+<ul>
+<li>当年也不是没有头脑清醒的人，但他们太早了一步，他们指出这个泡沫会破碎，但市场用不断升高证明他们论断的错误。开始还有人听听他们的警钟，随后便嘲笑他们的短视。骗案层出不穷是所有“疯”到了晚期的特征之一</li>
+<li>所有的疯狂都有梦醒时分。</li>
+<li>气球吹胀的初期，气球后面一定有一动人的故事，提供给人们无穷的想像。发财的希望，促使投资大众开始投入</li>
+<li>每一个更高的波浪都带动更多的贪婪心理，吸引更多的股民加入。股票将节节升高，这就形成了所谓的升势。</li>
+<li>“疯”的特性</li>
+<li>1．可信的想法、概念或产品，能提供快速的增长，带来巨额的财富</li>
+<li>2．社会游资甚多，或通过某些方式“创造”出游资。一时这些资金集中在某个领域，必定带来滚雪球效应</li>
+<li>3．这个想法必须具备即简单又复杂的特性。简单到普通民众能“觉”得是好主意，但必须复杂到很难用事实证明其对错。否则气球吹不起来。</li>
+<li>4．有人赚到钱！没有什么比轻松和快速来钱更能吸引普通民众，它传染的速度远超过瘟疫。</li>
+<li>5．气球胀到一定地步，有“专家”背书：这气球会继续胀。这些“专 家”通常是偶像人物，代表智慧、权威、依赖。民众相信自己在模仿成功人士。</li>
+<li>6．气球胀的时间比常人想像得更久。最初指出气球会破的人随着气球的不断胀大而被嘲笑。</li>
+<li>经济史是一部基于假象和谎言的连续剧，经济史的演绎从不基于真实的剧本，但它铺平了累积巨额财富的道路。做法就是认清其假象，投入其中，在假象被公众认识之前退出游戏。</li>
+</ul>
+<h2>炒手访谈</h2>
+<ul>
+<li>你做什么都可以，只要你自己喜欢！但我希望你能有一个不求人的一技之长。”</li>
+<li>体验风险阶段</li>
+<li>我每次赚了大钱，随即常常来一次亏大钱，因为每次赚了大钱，都让我自己觉得自己”懂了”</li>
+<li>任何有输的可能的行为都是赌。把钱存银行不是赌，因为一定有利息。可炒股就是赌钱，两者没有区别。</li>
+</ul>
+<h2><strong>金钱的反思</strong></h2>
+<ul>
+<li>成功不是达到目的，应该是达到这一目的的过程。</li>
+<li>你可能较其它行的从业者富有，但成为富豪在天不在人</li>
+<li>别想着在股市赚钱</li>
+<li>别将股市当成是赚钱的地方，将它当成是娱乐场所，当成小赌怡情、陶冶性情的场所；这样你就可以据此制定一系列游戏规则，按这些游戏规则，你将以最少的代价得到最多的乐趣。</li>
+<li>一、多玩几种游戏，将玩的费用分散些！</li>
+<li>二、开心的游戏玩久些，不开心的游戏便快些离开！</li>
+<li>三、别把痛苦带回家！</li>
+<li>华尔街有个说法：第一损失往往是代价最小的损失。</li>
+</ul>
+<h3><strong>建立并严守自己的规则</strong></h3>
+<ul>
+<li>正常”或“不正常”涉及一个很重要的数学概念：概率！想在股市谋生，每次买卖都要有50％以上的胜率，任何持有的股票都应有超过50％的上升几率，否则你无法从股市长久赚到钱。有了判断“正常”或“不正常”的能力，你在股市就有了50％以上的胜率，你就有了生存的可能。想有这样的判断力，除了熬和交学费外，似乎还没有什么其他方法——而最重要的是熬！</li>
+<li>小小做，快快止损</li>
+<li>为自己立些规矩，按规矩做，你会成功的</li>
+</ul>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>《深入设计模式》阅读笔记</title>
+      <link>https://binkyle.github.io/blog/design%20mode/%E6%B7%B1%E5%85%A5%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F_%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0.html</link>
+      <guid>https://binkyle.github.io/blog/design%20mode/%E6%B7%B1%E5%85%A5%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F_%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">《深入设计模式》阅读笔记</source>
+      <description>围绕设计原则、创建型与结构型模式整理的长篇阅读笔记，保留示例与思考。</description>
+      <category>编程与软件工程</category>
+      <pubDate>Sun, 16 Jun 2024 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>本文主要总结设计模式这本书，并用c语言简单举例</p>
+<!-- more -->
+<h2><strong>一、前提</strong></h2>
+<h3>1.本书背景及重要性</h3>
+<p>这本书由亚历山大·什韦茨（Alexander Shvets）撰写，深入探讨了23种经典的设计模式。它不仅介绍了设计模式的定义、分类和应用场景，还通过具体的代码示例和UML图，帮助读者更好地理解和应用这些模式。</p>
+<h4><strong>1.背景</strong></h4>
+<p>设计模式是软件设计中常见问题的典型解决方案，它们就像能根据需求进行调整的预制蓝图，可用于解决代码中反复出现的设计问题。自1994年“四人组（GoF）”的《设计模式：可复用面向对象软件的基础》一书出版以来，设计模式逐渐成为软件开发领域的重要组成部分。随着软件开发技术的不断发展，新的设计模式不断涌现，原有的设计模式也在不断演进和完善。因此，深入研究设计模式对于提高软件设计的质量和效率具有重要意义。</p>
+<h4><strong>2.重要性</strong></h4>
+<ol>
+<li><strong>提高软件的可复用性</strong>：设计模式是软件开发中的经验总结，它们提供了一种通用的解决方案，可以在不同的项目中重复使用。通过使用设计模式，可以减少代码的重复编写，提高代码的复用率，从而降低软件开发的成本和风险。</li>
+<li><strong>提高软件的可维护性</strong>：设计模式通常具有良好的结构和组织，它们将复杂的系统分解为简单的模块，使得软件的维护更加容易。通过使用设计模式，可以提高软件的可读性、可扩展性和可维护性，从而降低软件维护的成本和风险。</li>
+<li><strong>提高软件的开发效率</strong>：设计模式提供了一种通用的解决方案，可以在不同的项目中重复使用。通过使用设计模式，可以减少代码的重复编写，提高代码的复用率，从而提高软件开发的效率。</li>
+<li><strong>促进团队协作</strong>：设计模式是软件开发中的经验总结，它们提供了一种通用的解决方案，可以在不同的项目中重复使用。通过使用设计模式，可以提高团队成员之间的沟通和协作效率，从而提高团队的整体素质和竞争力。</li>
+</ol>
+<h3>2.基础概念</h3>
+<h4>1. + 和 - 符号表示</h4>
+<p>+表示公有</p>
+<p>-表示私有</p>
+<h4>2. Interface概念</h4>
+<p>interface代表对象的共有部分</p>
+<p>基于接口的实现，规定一类对象的行为</p>
+<figure><figcaption>Untitled</figcaption></figure>
+<p>如果父类实现了某个接口，子类必须实现该接口；子类继承父类的目的是对父类的拓展，无法裁剪;</p>
+<p>开闭原则的基础，实现拒绝修改，支持拓展</p>
+<h4>3. 蓝图<strong>（Blueprint）</strong></h4>
+<p>蓝图通常指的是系统或应用的高层设计。它描述了系统的架构、组件、模块以及它们之间的关系和交互。蓝图更多关注的是整体结构和规划，而不是具体的实现细节。</p>
+<h2><strong>二、设计模式的定义和分类</strong></h2>
+<h4>1.设计模式的概念</h4>
+<p>设计模式是软件设计中常见问题的典型解决方案，它们就像能根据需求进行调整的预制蓝图，可用于解决代码中反复出现的设计问题。</p>
+<p>设计模式并不是一段特定的代码，而是解决特定问题的一般性概念。它提供了一种通用的解决方案，可以在不同的项目中重复使用。设计模式的目的是提高软件的可复用性、可维护性和可读性，使软件设计更加灵活、高效和可靠。</p>
+<p>设计模式通常具有以下特点：</p>
+<ol>
+<li><strong>通用性</strong>：设计模式是针对软件设计中常见问题的解决方案，具有广泛的适用性。</li>
+<li><strong>可复用性</strong>：设计模式提供了一种通用的解决方案，可以在不同的项目中重复使用，减少代码的重复编写。</li>
+<li><strong>灵活性</strong>：设计模式可以根据具体的需求进行调整和扩展，具有较高的灵活性。</li>
+<li><strong>可读性</strong>：设计模式提供了一种清晰、简洁的设计思路，使代码易于理解和维护。</li>
+</ol>
+<h4>2.模式构成</h4>
+<p>| 意图 | 描述问题和解决方案 |<br>
+|</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>davinci developer classic Port auto-connect</title>
+      <link>https://binkyle.github.io/blog/Autosar/DaVinci%20Configurator%20Classic/Auto-Connect-Port-Prototypes/Auto-Connect_Port_Prototypes.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/DaVinci%20Configurator%20Classic/Auto-Connect-Port-Prototypes/Auto-Connect_Port_Prototypes.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">davinci developer classic Port auto-connect</source>
+      <description>记录 DaVinci Developer 的端口自动连接规则与匹配模式。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Sun, 04 Feb 2024 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>本文主要讲解developer Port auto-connect 规则</p>
+<!-- more -->
+<h2>连接原则</h2>
+<p><br>
+</p>
+<h2>auto-connect</h2>
+<h3>simple pattern</h3>
+<h3>enhanced patterns</h3>
+<h2>Reference</h2>
+<p>原附带的供应商 PDF 暂停对外提供，待作者确认转载授权后恢复。请通过已授权的软件文档查阅原始规则。</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>Autosar davinci developer classic使用教程</title>
+      <link>https://binkyle.github.io/blog/Autosar/DaVinci%20Configurator%20Classic/userManual/userManual.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/DaVinci%20Configurator%20Classic/userManual/userManual.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">Autosar davinci developer classic使用教程</source>
+      <description>从工作空间、SWC、端口与 Runnable 出发，整理 DaVinci Developer 的基本操作。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Mon, 15 Jan 2024 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>本文主要讲解Autosar davinci developer classic基本使用</p>
+<!-- more -->
+<h2>1.介绍</h2>
+<p>为autosar ECU 设计软件组件架构，位于V形流程的Application Software Development;<br>
+通过图形视图或文本网格视图，可以设计包括端口、数据在内的软件组件类型、连接器和内部行为。<br>
+</p>
+<h2>2.工作空间(workspace)</h2>
+<figure><figcaption>Alt text</figcaption></figure>
+<figure><figcaption>Alt text</figcaption></figure>
+<h2>3. SWC 设计</h2>
+<figure><figcaption>Alt text</figcaption></figure>
+<ol>
+<li>应用组件(Application Components)</li>
+<li>端口、端口初始值和数据元素(Ports, Port Init Values and Data Elements)</li>
+<li>连接(Connections)</li>
+<li>可运行实体(Runnables)</li>
+<li>触发器(Triggers)</li>
+<li>端口访问(Port Access)</li>
+<li>数据映射(Data Mapping)</li>
+</ol>
+<h3>1. 创建 Application Components</h3>
+<p>在 object browser界面有三种视图：Type-oriented、Package-oriented 和 File-oriented<br>
+</p>
+<ol>
+<li>在 Type-oriented 视图右键即可创建新Application Component type</li>
+</ol>
+<figure><figcaption>Alt text</figcaption></figure>
+<h3>2. 理解类型、原型和接口(Types, Prototypes and Interfaces)</h3>
+<p>在Object Browser中，软件组件是类型，端口是接口。只要你<br>
+使用它们，它们就变成了原型</p>
+<ul>
+<li>Port Interface used by a component type -&gt; Port Prototype</li>
+<li>Component Type in Object Browser used in software design view -&gt; Component Prototype</li>
+</ul>
+<figure><figcaption>Alt text</figcaption></figure>
+<h3>3. 端口、端口初始值和 数据元素(元数据的一个原子数据单元)</h3>
+<p>在使用应用程序端口之前，必须定义应用程序端口接口。要完全定义端口接口，如果不想使用预定义的数据类型，则必须首先定义数据类型。<br>
+端口有以下几个类别</p>
+<ul>
+<li>Sender Ports to provide information</li>
+<li>Receiver Ports to receive information</li>
+<li>Sender/Receiver Ports to provide and receive information within one port</li>
+<li>Server Ports to provide services (operations)</li>
+<li>Client Ports to use services (operations)</li>
+<li>Calibration Ports to hand over calibration parameters</li>
+<li>Mode Ports to e.g. trigger or not trigger runnables within certain modes</li>
+</ul>
+<h3>4. 在应用程序组件中配置服务端口</h3>
+<h3>5. 定义runnables</h3>
+<h3>6. 为runnable配置触发器、 Port Access</h3>
+<h3>7. 生成模板</h3>
+<p>如果计划手动实现SWC(而不是使用基于模型的代码生成器)，可以生成SWC模板和合约头文件。<br>
+要生成代码，可以在对象浏览器中选择SWC，并通过上下文调用代码生成器菜单</p>
+<figure><figcaption>Alt text</figcaption></figure>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>Python项目生成requirements文件</title>
+      <link>https://binkyle.github.io/blog/programming%20language/Python/generate_requirments.html</link>
+      <guid>https://binkyle.github.io/blog/programming%20language/Python/generate_requirments.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">Python项目生成requirements文件</source>
+      <description>使用 pipreqs 从项目导入关系生成、更新 requirements 依赖清单。</description>
+      <category>编程与软件工程</category>
+      <pubDate>Mon, 15 Jan 2024 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>如何生成requirements依赖文件</p>
+<!-- more -->
+<h2>ppireqs 安装</h2>
+<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">pip</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> install</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> pipreqs</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><h2>使用</h2>
+<div class="language- line-numbers-mode" data-highlighter="shiki" data-ext style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-"><span class="line"><span>Usage:</span></span>
+<span class="line"><span>    pipreqs [options] [&#x3C;path>]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Arguments:</span></span>
+<span class="line"><span>    &#x3C;path>                The path to the directory containing the application files for which a requirements file</span></span>
+<span class="line"><span>                          should be generated (defaults to the current working directory)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Options:</span></span>
+<span class="line"><span>    --use-local           Use ONLY local package info instead of querying PyPI</span></span>
+<span class="line"><span>    --pypi-server &#x3C;url>   Use custom PyPi server</span></span>
+<span class="line"><span>    --proxy &#x3C;url>         Use Proxy, parameter will be passed to requests library. You can also just set the</span></span>
+<span class="line"><span>                          environments parameter in your terminal:</span></span>
+<span class="line"><span>                          $ export HTTP_PROXY="http://127.0.0.1:3128"</span></span>
+<span class="line"><span>                          $ export HTTPS_PROXY="https://127.0.0.1:1080"</span></span>
+<span class="line"><span>    --debug               Print debug information</span></span>
+<span class="line"><span>    --ignore &#x3C;dirs>...    Ignore extra directories, each separated by a comma</span></span>
+<span class="line"><span>    --no-follow-links     Do not follow symbolic links in the project</span></span>
+<span class="line"><span>    --encoding &#x3C;charset>  Use encoding parameter for file open</span></span>
+<span class="line"><span>    --savepath &#x3C;file>     Save the list of requirements in the given file</span></span>
+<span class="line"><span>    --print               Output the list of requirements in the standard output</span></span>
+<span class="line"><span>    --force               Overwrite existing requirements.txt</span></span>
+<span class="line"><span>    --diff &#x3C;file>         Compare modules in requirements.txt to project imports</span></span>
+<span class="line"><span>    --clean &#x3C;file>        Clean up requirements.txt by removing modules that are not imported in project</span></span>
+<span class="line"><span>    --mode &#x3C;scheme>       Enables dynamic versioning with &#x3C;compat>, &#x3C;gt> or &#x3C;non-pin> schemes</span></span>
+<span class="line"><span>                          &#x3C;compat> | e.g. Flask~=1.1.2</span></span>
+<span class="line"><span>                          &#x3C;gt>     | e.g. Flask>=1.1.2</span></span>
+<span class="line"><span>                          &#x3C;no-pin> | e.g. Flask</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3>使用案例</h3>
+<ol>
+<li>生成requirements</li>
+</ol>
+<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">pipreqs</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> /home/project/location</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">Successfully</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> saved</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> requirements</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> file</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> in</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> /home/project/location/requirements.txt</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><ol start="2">
+<li>更新requirements</li>
+</ol>
+<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">pipreqs</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --force</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> [location]</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><h2>参考链接</h2>
+<p><a href="https://pypi.org/project/pipreqs/" target="_blank" rel="noopener noreferrer">pipreqs</a></p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>Python虚拟环境配置及其工作原理</title>
+      <link>https://binkyle.github.io/blog/programming%20language/Python/python_venv.html</link>
+      <guid>https://binkyle.github.io/blog/programming%20language/Python/python_venv.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">Python虚拟环境配置及其工作原理</source>
+      <description>梳理 Python 虚拟环境的目录、解释器与 sys.prefix 等基本机制。</description>
+      <category>编程与软件工程</category>
+      <pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>venv in python</p>
+<!-- more -->
+<h2>工作原理</h2>
+<p>当Python解释器在虚拟环境中运行时，<a href="https://docs.python.org/3/library/sys.html#sys.prefix" target="_blank" rel="noopener noreferrer">sys.prefix</a>和<a href="https://docs.python.org/3/library/sys.html#sys.exec_prefix" target="_blank" rel="noopener noreferrer">sys.exec_prefix</a>指向虚拟环境的目录，而sys.prefix则指向虚拟环境的目录。<a href="https://docs.python.org/3/library/sys.html#sys.base_prefix" target="_blank" rel="noopener noreferrer">sys.base_prefix</a>和 <a href="https://docs.python.org/3/library/sys.html#sys.base_exec_prefix" target="_blank" rel="noopener noreferrer">sys.base_exec_prefix</a>指向用于创建环境的基本Python。检查sys.prefix != sys.base_prefix来确定当前解释器是否从虚拟环境中运行。</p>
+<p>虚拟环境可以使用其二进制目录(bin on POSIX; Scripts on Windows)。这将把该目录添加到您的PATH中，以便运行python将调用环境的python解释器，并且您可以运行已安装的脚本而不必使用它们的完整路径。激活脚本的调用是特定于平台的(<code>&lt;venv&gt;</code>必须被包含虚拟环境的目录的路径所替换)</p>
+<h2>配置方法</h2>
+<p>在Windows/Linux上，你可以使用Python的内置工具<code>venv</code>来创建指定版本的虚拟环境。以下以Window环境为例创建指定版本虚拟环境的步骤：</p>
+<ol>
+<li>
+<p>确保你已经安装了指定版本的Python解释器。<a href="https://www.python.org/downloads/windows/" target="_blank" rel="noopener noreferrer">你可以在Python官方网站</a>上下载和安装所需的<a href="https://www.python.org/downloads/windows/" target="_blank" rel="noopener noreferrer">Python版本</a></p>
+</li>
+<li>
+<p>打开命令提示符（CMD）或者PowerShell。</p>
+</li>
+<li>
+<p>导航到你希望创建虚拟环境的目录。例如，如果你想在<code>C:\\Projects</code>目录下创建虚拟环境，可以使用以下命令：</p>
+</li>
+</ol>
+<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">cd</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> C:</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">\\</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF">Projects</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><ol start="4">
+<li>创建虚拟环境。使用<code>python</code>命令和<code>m venv</code>参数，后面跟着虚拟环境的名称和Python解释器的路径。例如，如果你想创建一个名为<code>myenv</code>的虚拟环境，并使用Python 3.7版本，可以使用以下命令：</li>
+</ol>
+<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">python</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> -m</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> venv</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> myenv</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><p>如果你的系统上同时安装了多个版本的Python，你可以指定要使用的Python解释器的完径。例如：</p>
+<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">python</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> -m</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> venv</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --python=C:</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">\\</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">Python37</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">\\</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">python.exe</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> myenv</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><ol start="5">
+<li>激活虚拟环境。在命令提示符或者PowerShell中，使用以下命令激活虚拟环境：</li>
+</ol>
+<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">myenv\\Scripts\\activate</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><p>激活后，你将看到命令提示符或者PowerShell的提示符前面有<code>(myenv)</code>字样，表示你进入了虚拟环境。</p>
+<p>现在，你已经成功创建了指定版本的虚拟环境，并且可以在该环境中安装和运行特定版本的Python程序。</p>
+<h2>参考链接</h2>
+<p><a href="https://docs.python.org/3/library/venv.html" target="_blank" rel="noopener noreferrer">https://docs.python.org/3/library/venv.html</a></p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>C++中两种字符串拼接的区别</title>
+      <link>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/c__%E4%B8%A4%E7%A7%8D%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%8B%BC%E6%8E%A5%E5%8C%BA%E5%88%AB.html</link>
+      <guid>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/c__%E4%B8%A4%E7%A7%8D%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%8B%BC%E6%8E%A5%E5%8C%BA%E5%88%AB.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">C++中两种字符串拼接的区别</source>
+      <description>通过 C++ 示例比较字符串拼接表达式与指针相关行为。</description>
+      <category>编程与软件工程</category>
+      <pubDate>Mon, 25 Dec 2023 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>本文探讨C++中 s = s + 'A' 和 s += 'A' 的区别</p>
+<!-- more -->
+<h2>原理</h2>
+<p>在C++中，当你执行<code>s = s + 'A'</code>时，实际上是创建了一个新的字符串。这是因为C++中字符串的<code>+</code>运算符被重载以连接字符串，其结果是一个新的字符串。</p>
+<p>另一方面，当你执行<code>s += 'A'</code>时，这是一种原地操作，它通过将字符'A'附加到现有字符串<code>s</code>上来修改现有字符串。字符串的<code>+=</code>运算符被设计为修改现有字符串对象，而不是创建新的对象。</p>
+<p>从效率的角度来看，<code>s += 'A'</code>可能比<code>s = s + 'A'</code>更高效，因为它有可能避免创建新的字符串对象，直接修改现有对象。</p>
+<p>简而言之：</p>
+<ul>
+<li>
+<p><code>s = s + 'A'</code>：通过将现有字符串<code>s</code>和字符'A'连接起来创建一个新的字符串对象，然后将这个新字符串赋给<code>s</code>。</p>
+</li>
+<li>
+<p><code>s += 'A'</code>：通过将字符'A'附加到现有字符串<code>s</code>上来修改现有字符串。</p>
+</li>
+</ul>
+<p>一般来说，如果你不需要保留原始字符串，使用<code>+=</code>可能更高效，因为它修改现有对象。然而，如果你想保留原始字符串不变，应该使用<code>s = s + 'A'</code>。</p>
+<h2>案例</h2>
+<p>参考链接：</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>一些算法公式技巧摘录</title>
+      <link>https://binkyle.github.io/blog/algorithm/%E4%B8%80%E4%BA%9B%E7%AE%97%E6%B3%95%E6%9D%82%E8%AE%B0.html</link>
+      <guid>https://binkyle.github.io/blog/algorithm/%E4%B8%80%E4%BA%9B%E7%AE%97%E6%B3%95%E6%9D%82%E8%AE%B0.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">一些算法公式技巧摘录</source>
+      <description>摘录模运算中加法、减法与乘法的基本关系。</description>
+      <category>编程与软件工程</category>
+      <pubDate>Mon, 25 Dec 2023 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>本文摘录模运算中加法、减法和乘法的基本关系。</p>
+<!-- more -->
+<h2>余法运算公式</h2>
+<p>a mod b表示a除以b的余数。有下面的公式：</p>
+<ul>
+<li>(a + b) % p = (a%p + b%p) %p</li>
+<li>(a - b) % p = ((a%p - b%p) + p) %p</li>
+<li>(a * b) % p = (a%p)*(b%p) %p</li>
+</ul>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>C/C++语法报错集合汇总</title>
+      <link>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/C_C__%E8%AF%AD%E6%B3%95%E6%8A%A5%E9%94%99%E9%9B%86%E5%90%88%E6%B1%87%E6%80%BB.html</link>
+      <guid>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/C_C__%E8%AF%AD%E6%B3%95%E6%8A%A5%E9%94%99%E9%9B%86%E5%90%88%E6%B1%87%E6%80%BB.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">C/C++语法报错集合汇总</source>
+      <description>记录 C/C++ 学习中遇到的语法报错与示例。</description>
+      <category>编程与软件工程</category>
+      <pubDate>Wed, 20 Dec 2023 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>本文主要汇总C/C++语法报错问题</p>
+<!-- more -->
+<h2>在C++类中vector声明，报错 “expected parameter declarator”</h2>
+<div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">class A{</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">private:</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">    vector</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x3C;int></span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> nums</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">5</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">);</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">};</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>错误原因是：编译器无法区分该语句是成员变量声明还是成员函数声明。</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>C语言sizeof宏分析</title>
+      <link>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/sizeof_in_c.html</link>
+      <guid>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/sizeof_in_c.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">C语言sizeof宏分析</source>
+      <description>一则关于 sizeof、宏与类型大小的旧学习笔记，保留原有分析。</description>
+      <category>编程与软件工程</category>
+      <pubDate>Sat, 09 Dec 2023 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>本文主要介绍C语言中sizeof的原理分析</p>
+<!-- more -->
+<h2>原理</h2>
+<p><code>sizeof</code> 是 C 语言的一个运算符，用于返回一个对象或数据类型的大小，以字节为单位。<code>sizeof</code> 运算符在编译时计算，不会执行实际的运算。</p>
+<p>由于 <code>sizeof</code> 是编译时计算大小的，其实现是由编译器提供的，而不是由标准 C 库提供的函数。因此，<code>sizeof</code> 的实现通常依赖于编译器和目标体系结构。</p>
+<h2>实现方式</h2>
+<p>以下是 <code>sizeof</code> 运算符的一种可能的简化实现，假设一个字节等于 8 比特：</p>
+<p>test.c文件</p>
+<div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">#define</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> SIZEOF</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">type</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">) ((</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">size_t</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">)(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">((type</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">*</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">)</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">0</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">)[</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">1</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">]))</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#66707B;--shiki-dark:#BDC4CC">// 示例用法</span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">int</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> main</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">() {</span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">    size_t</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> size </span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">=</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> SIZEOF</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">int</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">);</span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">    return</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> 0</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">;</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">}</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这个宏的工作原理是，将一个空指针转换为类型 <code>type*</code>，然后取数组的第一个元素的地址。由于数组索引是从零开始的，<code>&amp;((type*)0)[1]</code> 计算出第一个元素之后的地址。然后，整个表达式被强制转换为 <code>size_t</code> 类型，以表示大小。</p>
+<p>需要注意的是，这只是一个简化的例子，实际的实现可能更为复杂，以处理各种类型和体系结构。实际的 <code>sizeof</code> 实现通常是由编译器内部提供的，因为它需要考虑各种编译器和目标平台的特定细节。</p>
+<h3>代码分析</h3>
+<p><code>(size_t)(&amp;((type*)0)[1])</code> 的运算顺序可以分解为以下步骤：</p>
+<ol>
+<li><code>(type*)0</code>: 将整数 0 转换为指向类型 <code>type</code> 的指针，得到一个指向类型 <code>type</code> 的空指针。</li>
+<li><code>((type*)0)[1]</code>: 使用上一步得到的空指针进行数组操作，取得数组的第二个元素。这等效于 <code>( ((type*)0) + 1)</code>。请注意，这里并没有实际的数组，只是利用了指针运算的语法。</li>
+<li><code>&amp;((type*)0)[1]</code>: 取得数组第二个元素的地址。</li>
+<li><code>(size_t)(&amp;((type*)0)[1])</code>: 将这个地址转换为 <code>size_t</code> 类型。</li>
+</ol>
+<p>整个表达式的目的是计算一个指向类型 <code>type</code> 的指针，指向一个虚构的数组的第二个元素，然后获取这个元素的地址，并将其转换为 <code>size_t</code> 类型。这种技巧通常用于计算结构体或数组的大小，而无需创建实际的实例。</p>
+<p>通过将test.c文件编译成汇编文件可发现：</p>
+<p><code>SIZEOF(int)</code> 对应汇编文件中的 <code>movq $4, -8(%rbp)</code>，将值 4 存储在相对于 <strong><code>%rbp</code></strong> 偏移为 -8 的位置。</p>
+<p><code>SIZEOF(double)</code> 对应汇编文件中的<code>movq $8, -8(%rbp)</code>，将值 8 存储在相对于 <strong><code>%rbp</code></strong> 偏移为 -8 的位置。</p>
+<p>可见将整数 0 转换为指向类型 <code>type</code> 的指针，得到一个指向类型 <code>type</code> 的空指针时<code>type[0]</code>的地址为0，<code>((type*)0)[1]</code>的偏移量即为type的字节大小，从而可获取type的字节大小</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>Autosar can协议栈</title>
+      <link>https://binkyle.github.io/blog/Autosar/autosar_can_protocol.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/autosar_can_protocol.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">Autosar can协议栈</source>
+      <description>梳理 CAN 的基础通信模型和 AUTOSAR CAN 协议栈中的模块角色。</description>
+      <category>车载通信与网络</category>
+      <pubDate>Mon, 18 Dec 2023 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>本文主要讲解Autosar CAN 协议栈原理、集成及相关调试策略</p>
+<!-- more -->
+<h2>CAN通信基本原理</h2>
+<h3>CAN通信概述</h3>
+<p>CAN（Controller Area Network）即控制器局域网络。由于其高性能、高可靠性、及独 特的设计，CAN越来越受到人们的重视。国外已有许多大公司的产品采用了这一技术。</p>
+<p>CAN最初是由德国的BOSCH公司为汽车监测、控制系统而设计的。现代汽车越来越多地采用电子装置控制，如发动机的定时、注油控制，加速、刹车控制（ASC）及复杂的抗锁定刹车系统（ABS）等。由于这些控制需检测及交换大量数据，采用硬接信号线的方式不但烦琐、昂贵，而且难以解决问题，采用CAN总线上述问题便得到很好地解决。</p>
+<h3>CAN标准及原理图</h3>
+<p>CAN总线是一种用于在不同的ECU（电子控制单元）之间传输数据的线，CAN总线协议是一种ISO 国际标准化的串行通信协议，有 ISO-11898 和 ISO-11519两个系列。其定义有：<br>
+ISO-11898 定义了通信速率为 125 kbps ~1Mbps 的高速 CAN 通信标准，属于闭环总线，传输速率可达1Mbps，总线长度 ≤ 40米，如下图。</p>
+<p>ISO11519 定义了通信速率为 10～125 kbps 的低速 CAN 通信标准，属于开环总线，传输速率为40kbps时，总线长度可达1000米，如下图。<br>
+</p>
+<h3>CAN特性</h3>
+<ul>
+<li>传输速率最高可达1Mbps，距离最远可达10km</li>
+<li>通信介质选择灵活（双绞线、同轴电缆、光纤）</li>
+<li>采用双线差分信号</li>
+<li>协议本身对节点的数量没有限制</li>
+<li>总线上节点的数量可以动态改变，组网灵活</li>
+<li>短帧结构，传输时间短，受干扰概率低</li>
+<li>多主站结构，各节点平等，任一节点可在任一时刻主动发送</li>
+<li>非破坏性的基于优先级的总线仲裁</li>
+<li>优先级通过报文的标识符（ID）区分，报文标识符在网络中是唯一的
+<ol>
+<li>标识符描述了数据的含义</li>
+<li>某些特定的应用对标识符的分配进行了标准化</li>
+</ol>
+</li>
+<li>广播发送报文，报文可以被所有节点同时接收</li>
+<li>根据需要可进行相关性报文过滤<br>
+<br>
+</li>
+</ul>
+<h3>CAN功能特性</h3>
+<p>CAN总线上，信号表现为电压形式，通过CAN_H和CAN_L线上的电位差来表示CAN信号，分为显性电平(dominant)和隐性电平(recessive)两种类型。其中显性电平规定为逻辑0，隐性电平则为逻辑1。其具体定义可通过下图来理解。<br>
+</p>
+<h3>CAN系统构成</h3>
+<p>有两种，如下图；第三种是CAN收发器也集成到微控制器中<br>
+</p>
+<h2>AUTOSAR CAN协议栈概述</h2>
+<ul>
+<li>Driver：主要包括CAN的Driver，以及根据外部的CAN的收</li>
+</ul>
+<ul>
+<li>HaedwareAbs：包括用于区分CAN通信的接口，接收／发送不同功能的PDU以及控制CAN收发器进行工作的Transceiver</li>
+</ul>
+<ul>
+<li>Services：包换CAN的状态管理以及PDU和信号的处理相关的模块<br>
+</li>
+</ul>
+<h3>CAN Driver</h3>
+<ul>
+<li>MCU的CAN外设控制模块</li>
+<li>主要数处理CAN的控制器中的功能，实现 数据在MCU CAN模块的收发<br>
+</li>
+</ul>
+<h4>MCAL相关配置</h4>
+<ul>
+<li>CanGeneral：配置一些API的使能函数周期等</li>
+<li>CanController：配置MCU的CAN外设操作功能以及CAN的Filter</li>
+<li>CanHaradwareObject：配置CAN的接收发送邮箱以及使用的Filter</li>
+</ul>
+<h3>CANTrcv</h3>
+<p>CAN Trcv模块主要控制CAN外部收发器的模式，MCU的CAN信号与CAN总线建立起数据交互;目标是为适用于大多数当前和未来CAN收发器设备定义接口和行为。CAN Trcv抽象了CAN收发器硬件。它为更高层提供了一个独立于硬件的接口。 它通过使用MCAL层的API来访问CAN收发器硬件，以便实现ECU布局中的抽象化。<br>
+</p>
+<h4>CANTrcv 模式切换</h4>
+<ul>
+<li>CANTrcv的模式转换主要通过控制Dio或者SPI来控制硬件Trcv</li>
+<li>上电调用Init可以直接切换到任意一个模式</li>
+<li>SetMode函数用于被MainFunction或者CANIf接口调用控制</li>
+<li>在支持唤醒的Trcv一定要确保下电进入Sleep，才能有唤醒功能，这个时候Trcv处于常电模式，且唤醒中断引脚连接SBC的唤醒引脚<br>
+</li>
+</ul>
+<h4>MCAL配置</h4>
+<p>·General：主要配置相关API的使能以及是否支持唤醒等功能<br>
+·ConfigSet：根据外部电路配置Trcv的通道，主要分为DIO控制的和SPI控制的，DIO控制的根据使用的PIN关联到DIO通道，SPI控制的要分配SPI的Sequence</p>
+<h2>AUTOSAR CAN协议栈集成</h2>
+<h2>AUTOSAR CAN调试策略</h2>
+<h3>参考链接</h3>
+<p><a href="https://www.autosar.org/fileadmin/standards/R20-11/FO/AUTOSAR_TR_FoundationReleaseOverview.pdf" target="_blank" rel="noopener noreferrer">AUTOSAR_TR_FoundationReleaseOverview</a><br>
+AUTOSAR中国官方培训课程</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>Autosar解决方案概述</title>
+      <link>https://binkyle.github.io/blog/Autosar/autosar_solution_summary.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/autosar_solution_summary.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">Autosar解决方案概述</source>
+      <description>整理 AUTOSAR 的 CP、AP、FO 平台关系、架构与标准发布方式。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Sun, 17 Dec 2023 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>本文主要讲解Autosar解决方案相关内容</p>
+<!-- more -->
+<h2>Autosar技术标准框架</h2>
+<p>AUTOSAR技术标准针对不同的需求提供了不同的解决方案，以涵盖汽车软件开发领域的各种应用场景</p>
+<h3>Adaptive Platform(AP)</h3>
+<p>Adaptive Platform是AUTOSAR为开发安全相关的高算力ECU，如自动驾驶，而提供的解决方案</p>
+<p>AP分层软件架构特点:</p>
+<ul>
+<li>支持采用C++作为应用软件的编程语言</li>
+<li>采用面向服务的架构（SOA）</li>
+<li>支持多任务并行处理</li>
+<li>尽可能重用已有标准</li>
+<li>支持功能安全和信息安全</li>
+<li>有计划的动态性，而非完全动态</li>
+<li>支持基于敏捷的开发过程<br>
+</li>
+</ul>
+<h3>Classic Platform(CP)</h3>
+<p>Classic Platform是AUTOSAR为开发硬实时、高安全性嵌入式系统，如电驱控制，而提供的解决方案</p>
+<p>CP分层软件架构支持：</p>
+<ul>
+<li>对硬件进行抽象，实现软硬解耦</li>
+<li>对Runnable和Task进行调度（操作系统）</li>
+<li>抽象部署在同一ECU或者不同ECU上的应用之间的通信，实现整车层面的虚拟功能总线</li>
+<li>故障诊断及诊断服务</li>
+<li>功能安全服务</li>
+<li>今信息安全服务<br>
+</li>
+</ul>
+<p>CP所定义的系统服务、存储、通信、硬件1/0和复杂驱动等各个基础软件技术栈，其作用类似于人体的神经系统。相对应地，控制器硬件可以理解为身体，而应用软件可以理解为大脑或灵魂。<br>
+</p>
+<h3>Foundation(FO)</h3>
+<p>Foundation包含了AP和CP之间通用的内容以保证二者之间以及二者与非AUTOSAR系统之间的兼容性</p>
+<p>原文如下：<br>
+<br>
+</p>
+
+<h4>FO部分所定义的通用特性</h4>
+<p>FO部分所定义的内容为“基础设施”，同时适用于CP和AP两种系统，以保证二者之间的兼容性。如通信协议、元模型、主干需求与术语、文件模板等。</p>
+<h3>AP、CP、FO间的关系</h3>
+<figure><figcaption>Alt text</figcaption></figure>
+<h3>CP 与 AP 的区别</h3>
+<p>|CP|AP|<br>
+|</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>C语言extern关键字作用分析</title>
+      <link>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/extern_in_c_page1.html</link>
+      <guid>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/extern_in_c_page1.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">C语言extern关键字作用分析</source>
+      <description>从声明与定义出发，理解 C 语言 extern 的作用及跨文件引用。</description>
+      <category>编程与软件工程</category>
+      <pubDate>Sat, 09 Dec 2023 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>本文主要介绍C语言中extern的作用分析</p>
+<!-- more -->
+<h2>前提</h2>
+<p>首先理解声明和定义：</p>
+<p>声明是告诉编译器有一个这样的变量或函数存在，定义是为变量分配内存空间或者实现函数本体(body)</p>
+<div class="hint-container tip">
+<p class="hint-container-title">提示</p>
+<p>在c语言中声明和定义一个变量是同时进行的，但extern仅用于声明</p>
+</div>
+<h2>extern作用</h2>
+<p>在C语言中，关键字<code>extern</code>用于声明一个变量或函数，以便告诉编译器它们的存在，但并不会分配实际的存储空间。具体来说，<code>extern</code>的作用有以下几点：</p>
+<ol>
+<li>
+<p><strong>变量声明</strong>：当<code>extern</code>用于变量声明时，它告诉编译器该变量在其他文件中已经定义，因此在当前文件中不需要为其分配存储空间。这样做可以避免重复定义变量，而只是声明它的存在。</p>
+<div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#66707B;--shiki-dark:#BDC4CC">// 在一个文件中声明变量</span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">extern</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492"> int</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> x;</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div></div></div></li>
+<li>
+<p><strong>函数声明</strong>：类似地，<code>extern</code>也可以用于函数声明，以便告诉编译器该函数在其他文件中已经定义。</p>
+<div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#66707B;--shiki-dark:#BDC4CC">// 声明函数的存在</span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">extern</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492"> void</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> someFunction</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">();</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div></div></div></li>
+<li>
+<p><strong>全局变量</strong>：在全局范围内使用<code>extern</code>可以使变量在当前文件中具有全局作用域，但实际的定义在其他文件中。这在大型项目中很有用，因为它允许多个文件共享相同的全局变量。</p>
+<div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#66707B;--shiki-dark:#BDC4CC">// 在一个文件中使用 extern 声明全局变量</span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">extern</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492"> int</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> globalVariable;</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div></div></div></li>
+</ol>
+<p>总之，<code>extern</code>关键字用于声明变量或函数的存在，但不会分配实际的存储空间。这使得程序可以跨多个文件共享变量和函数，同时避免了重复定义的问题。</p>
+<h2>案例： 使用extern模拟面向对象编程</h2>
+<p>在C语言中，使用<code>extern</code>关键字可以实现一定程度的面向对象编程。下面是一个详细的例子，展示了如何使用<code>extern</code>来模拟类和对象的概念。</p>
+<p>首先，我们创建一个头文件<code>myclass.h</code>，其中定义了一个类<code>MyClass</code>和相关的方法和属性：</p>
+<div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#66707B;--shiki-dark:#BDC4CC">// myclass.h</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">#ifndef</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> MYCLASS_H</span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">#define</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> MYCLASS_H</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">typedef</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492"> struct</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> {</span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">    int</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> data;</span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">    void</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> (</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">*</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">printData)();</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">} MyClass;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">extern</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> MyClass myObject;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">void</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> MyClass_init</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">();</span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">void</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> MyClass_printData</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">();</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">#endif</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>然后，我们创建一个源文件<code>myclass.c</code>，实现了类的初始化和打印数据的方法：</p>
+<div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#66707B;--shiki-dark:#BDC4CC">// myclass.c</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">#include</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> &#x3C;stdio.h></span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">#include</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> "myclass.h"</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">MyClass myObject;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">void</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> MyClass_init</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">() {</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">    myObject.data </span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">=</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> 2023</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">;</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">    myObject.printData </span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">=</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> MyClass_printData;</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">void</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> MyClass_printData</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">() {</span></span>
+<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">    printf</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF">"Data: </span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">%d\\</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF">n"</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, myObject.data);</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">}</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>接下来，我们创建一个主文件<code>main.c</code>，在其中使用类和对象：</p>
+<div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#66707B;--shiki-dark:#BDC4CC">// main.c</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">#include</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> "myclass.h"</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">extern</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> MyClass myObject;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">int</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> main</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">() {</span></span>
+<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">    MyClass_init</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">();</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">    myObject.</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">printData</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">();</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">    return</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> 0</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">;</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">}</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>运行结果</p>
+<figure><figcaption>运行结果图</figcaption></figure>
+<p>在这个例子中，我们使用<code>extern</code>关键字在<code>main.c</code>中引用了在<code>myclass.c</code>中定义的<code>myObject</code>对象。通过调用<code>MyClass_init()</code>方法初始化对象，并通过<code>myObject.printData()</code>调用对象的方法。</p>
+<p>编译这些文件并运行程序，你将看到输出结果为<code>Data: 2023</code>，表示成功使用<code>extern</code>实现了面向对象编程的模拟。</p>
+<p>需要注意的是，虽然使用<code>extern</code>可以模拟类和对象的概念，但C语言本身并不直接支持面向对象编程。这只是一种基于C语言的技巧或模式来实现一些面向对象的思想。</p>
+<p>参考链接：<br>
+<a href="https://www.geeksforgeeks.org/difference-between-definition-and-declaration/" target="_blank" rel="noopener noreferrer">Difference between Definition and Declaration - GeeksforGeeks</a></p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>github代理配置指南</title>
+      <link>https://binkyle.github.io/blog/github/githubNote.html</link>
+      <guid>https://binkyle.github.io/blog/github/githubNote.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">github代理配置指南</source>
+      <description>记录 Git 的 system、global、local 代理配置层级及排查入口。</description>
+      <category>编程与软件工程</category>
+      <pubDate>Tue, 28 Nov 2023 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>本文主要介绍github system、global、local三个级别的代理配置及优先级</p>
+<!-- more -->
+<h2>指令介绍</h2>
+<h3>设置代理</h3>
+<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> config</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --global</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> http.proxy</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> http://127.0.0.1:[Port]</span></span>
+<span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> config</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --global</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> https.proxy</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> https://127.0.0.1:1080:[Port]</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div></div></div><h3>取消代理</h3>
+<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> config</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --global</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --unset</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> http.proxy</span></span>
+<span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> config</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --global</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --unset</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> https.proxy</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div></div></div><div class="hint-container tip">
+<p class="hint-container-title">提示</p>
+<p>[Port]替换为你本地代理的端口<br>
+--global 可替换为--system、--local</p>
+</div>
+<h2>生效优先级</h2>
+<p>system级指的是程序级别的配置，配置文件在程序的配置目录中<br>
+global级是用户级别的配置，配置文件在用户目录中<br>
+local级是仓库级别的配置，配置文件在仓库下的.git目录中</p>
+<div class="hint-container tip">
+<p class="hint-container-title">提示</p>
+<p>优先级：local &gt; global &gt; system</p>
+</div>
+<h2>案例</h2>
+<p>在一个git脚本中当执行取消代理指令</p>
+<figure><figcaption>Alt text</figcaption></figure>
+<p>遇到报错</p>
+<figure><figcaption>Alt text</figcaption></figure>
+<p>通过执行代理查看指令</p>
+<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> config</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --global</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --get</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> http.proxy</span></span>
+<span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> config</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --global</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --get</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> https.proxy</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div></div></div><p>发现global级别配置了代理地址，取消global级别的代理配置后，问题解决</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>使用vuePress搭建博客并部署到gitpages上</title>
+      <link>https://binkyle.github.io/blog/vuePressgit.html</link>
+      <guid>https://binkyle.github.io/blog/vuePressgit.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">使用vuePress搭建博客并部署到gitpages上</source>
+      <description>记录使用 VuePress 构建博客和部署到 GitHub Pages 的过程，配置属于当时版本。</description>
+      <category>编程与软件工程</category>
+      <pubDate>Fri, 03 Nov 2023 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>这里使用的是theme-hope主题，项目环境、构建、本地运行指令可参考下面这个链接。</p>
+<!-- more -->
+<h2>项目构建</h2>
+<p>参考链接 <a href="https://theme-hope.vuejs.press/zh/cookbook/tutorial/" target="_blank" rel="noopener noreferrer">小白教程</a></p>
+<h2>部署到gitpages</h2>
+<p>若参考上面项目构建链接，此时本地git仓库已初始化</p>
+<p>1.创建本地分支</p>
+<p>查看本地分支</p>
+<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> branch</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><p>创建本地分支</p>
+<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> checkout</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> -b</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> master</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><p>2.连接远程分支</p>
+<p>添加远程仓库的引用</p>
+<div class="language-sh line-numbers-mode" data-highlighter="shiki" data-ext="sh" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-sh"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> remote</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> add</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> origin</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> https://github.com/yourusername/myrepo.git</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><p>3.提交本地分支到远程分支</p>
+<div class="language-sh line-numbers-mode" data-highlighter="shiki" data-ext="sh" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-sh"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> push</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> origin</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492"> &#x3C;</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF">local_branc</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">h</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">></span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF">:</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x3C;</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF">remote_branc</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">h</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div>]]></content:encoded>
+    </item>
+  </channel>
+</rss>
