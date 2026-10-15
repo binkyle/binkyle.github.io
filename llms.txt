@@ -1,0 +1,23 @@
+# 孤星旅记
+
+> Bin 的嵌入式软件、AUTOSAR 与车载网络技术记录。
+
+## 入口
+- [首页](https://binkyle.github.io/)
+- [文章档案](https://binkyle.github.io/blog/)
+- [关于作者](https://binkyle.github.io/intro.html)
+
+## 技术专题
+- [车载以太网 Switch](https://binkyle.github.io/blog/Ethernet/Switch/): 从一根连线到一帧报文，看清硬件、转发与配置之间的关系。
+- [嵌入式运行时测量](https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/): 给时间与栈空间建立账本，让系统的运行有迹可循。
+- [AUTOSAR 与底层系统](https://binkyle.github.io/topics/autosar.html): 沿着状态、编译与执行的路径，理解抽象之下的工程机制。
+
+## 精选文章
+- [跨核不是缓存问题：从 AUTOSAR COM Deferred EventCache 看事件与状态一致性](https://binkyle.github.io/blog/Autosar/autosar_com_cross_core_deferred_eventcache_consistency.html): 从可构造的双核交错分析事件与状态的不一致，区分缓存可见性、原子性、顺序与跨核互斥。
+- [一帧以太网报文如何穿过 Switch：VLAN、VTU、FID 与 ATU 转发机制](https://binkyle.github.io/blog/Ethernet/Switch/vlan-forwarding.html): 用一帧虚拟传感器报文串起 VLAN 分类、VTU/FID、MAC 学习、ATU 查找、端口过滤和出口 Tag 处理，解释转发与丢帧条件。
+- [嵌入式堆栈使用量测量：Stack Painting、High-Water Mark 与溢出监控](https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/stack-measurement.html): 从栈内存模型出发，理解填充与历史水位，连接 Guard、AUTOSAR OS 查询和可独立运行的 C99 Stack Observer，形成可验证的栈容量与安全裕度观测方法。
+- [从 .c 到 .a 再到 ELF：TC397 + TASKING 静态库生产与链接全流程](https://binkyle.github.io/blog/Autosar/TC397_TASKING_Static_Library_From_Source_To_ELF.html): 沿着 .c、.o、.a 与 ELF 追踪编译、归档、链接和集成契约，厘清库的生产与使用边界。
+
+## 公开项目
+- [autosar-module-lab](https://github.com/binkyle/autosar-module-lab): 面向嵌入式与 AUTOSAR 的独立模块、接口、示例与接入文档。
+- [embedded-runtime-observer](https://github.com/binkyle/autosar-module-lab/tree/main/embedded-runtime-observer): 用 C99 与静态内存观测 Task / Idle / ISR 时间和栈水位。

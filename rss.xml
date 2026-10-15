@@ -6,163 +6,14 @@
     <link>https://binkyle.github.io/</link>
     <description>Bin 的工程探索与个人记录。沿着 AUTOSAR、车载网络与底层系统的脉络，在复杂系统中寻找秩序。</description>
     <language>zh-CN</language>
-    <pubDate>Thu, 15 Oct 2026 14:06:39 GMT</pubDate>
-    <lastBuildDate>Thu, 15 Oct 2026 14:06:39 GMT</lastBuildDate>
+    <pubDate>Thu, 15 Oct 2026 15:59:57 GMT</pubDate>
+    <lastBuildDate>Thu, 15 Oct 2026 15:59:57 GMT</lastBuildDate>
     <generator>@vuepress/plugin-feed</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
-    <category>车载通信与网络</category>
     <category>嵌入式系统与 AUTOSAR</category>
+    <category>车载通信与网络</category>
     <category>编程与软件工程</category>
     <category>阅读与思考</category>
-    <item>
-      <title>车载 Switch 配置的生效机制：固件初始化、UMSD 与 MDIO 管理链路</title>
-      <link>https://binkyle.github.io/blog/Ethernet/Switch/configuration-mdio.html</link>
-      <guid>https://binkyle.github.io/blog/Ethernet/Switch/configuration-mdio.html</guid>
-      <source url="https://binkyle.github.io/rss.xml">车载 Switch 配置的生效机制：固件初始化、UMSD 与 MDIO 管理链路</source>
-      <description>区分 XML 离线配置、固件初始化、UMSD/MCAL 管理访问与 RTE 记录上报，计算 MDIO 事务开销，并介绍配置冲突的只读验证方法。</description>
-      <category>车载通信与网络</category>
-      <pubDate>Wed, 14 Oct 2026 00:00:00 GMT</pubDate>
-      <content:encoded><![CDATA[<p>Switch 的运行状态由已经完成的初始化和管理操作共同形成。XML 描述期望配置，C 代码表达软件动作，运行时寄存器与表项反映当前硬件状态。<strong>看见配置值、找到 API 名称和确认配置已经生效，是三件不同的事。</strong> 沿着配置消费、构建、执行、硬件访问和读回建立连续关系，才能解释它们之间的差异。</p>
-<p>本文是<a href="/blog/Ethernet/Switch/" target="_blank">车载以太网 Switch 专栏</a>的第三篇，结合<a href="/blog/Ethernet/Switch/hardware-architecture.html" target="_blank">硬件连接</a>与<a href="/blog/Ethernet/Switch/vlan-forwarding.html" target="_blank">二层转发</a>，说明配置生效、UMSD/MDIO 管理与 AUTOSAR 集成。所有代码均为自行构造的示意代码，不引用内部驱动、配置原件或专有寄存器序列。</p>
-<h2>1. 上电后，谁把端口配置好</h2>
-<p>Switch 一般先经历供电、参考时钟稳定、复位释放、Strap 采样和硬件默认初始化。随后怎样建立端口与转发表，取决于芯片和系统：有的器件依赖外部主机，有的具备内部处理器与固件，有的可以读取非易失性配置。</p>
-<p>| 阶段或来源 | 可能承担的工作 | 不能直接推出的结论 |<br>
-|</p>
-]]></content:encoded>
-      <enclosure url="https://binkyle.github.io/assets/switch/management-paths.svg" type="image/svg+xml"/>
-    </item>
-    <item>
-      <title>车载以太网交换芯片架构：从 MAC、PHY 到 RGMII 与 SerDes</title>
-      <link>https://binkyle.github.io/blog/Ethernet/Switch/hardware-architecture.html</link>
-      <guid>https://binkyle.github.io/blog/Ethernet/Switch/hardware-architecture.html</guid>
-      <source url="https://binkyle.github.io/rss.xml">车载以太网交换芯片架构：从 MAC、PHY 到 RGMII 与 SerDes</source>
-      <description>以虚拟车载网络解释 GMAC 与 Switch 的分工、PHY 的内部层次，以及 RGMII、SGMII、SerDes 和 T1 铜缆接口的连接边界。</description>
-      <category>车载通信与网络</category>
-      <pubDate>Wed, 14 Oct 2026 00:00:00 GMT</pubDate>
-      <content:encoded><![CDATA[<p>车载以太网交换芯片连接传感器、计算节点和控制节点，完成端口间报文转发。理解它的硬件架构，需要同时看清三个对象：<strong>MAC 处理以太网帧，PHY 实现物理链路，Switch 连接多个端口并决定帧的出口。</strong> RGMII、SGMII 和高速 SerDes 则处于不同的连接边界，不能仅根据接口名字判断网线怎样接。</p>
-<p>本文是<a href="/blog/Ethernet/Switch/" target="_blank">车载以太网 Switch 专栏</a>的第一篇。这里先建立连接模型，<a href="/blog/Ethernet/Switch/vlan-forwarding.html" target="_blank">第二篇</a>讨论一帧报文的转发，<a href="/blog/Ethernet/Switch/configuration-mdio.html" target="_blank">第三篇</a>讨论管理与配置生效。</p>
-<h2>1. GMAC 与 Switch 的分工</h2>
-<p>MCU 集成 Gigabit Ethernet MAC，意味着它能够收发自身的以太网帧。典型收发路径中，MAC 与 DMA、描述符、缓冲区和中断配合，把网络数据交给 MCU 软件，或者将软件准备好的数据送入链路。</p>
-<p>Switch 面向多个端口：从某个端口接收帧，根据 VLAN、目的 MAC、端口状态及策略，选择一个或多个出口。多个 DMA 队列仍是同一网络接口内部的资源，不会自动变成多个可接传感器的物理端口。</p>
-<p>Infineon 的 TC3xx GETH 公开培训资料列出了 10/100/1000 Mbit/s MAC、MII/RMII/RGMII、DMA 队列及过滤能力。[1] 这说明 GETH 可以为 MCU 提供网络连接；是否具有独立的多端口交换能力，要看芯片的交换结构，不能由“有 MAC”或“有 VLAN 过滤”推出。</p>
-<p>| 对象 | 主要职责 | 典型连接 |<br>
-|</p>
-]]></content:encoded>
-      <enclosure url="https://binkyle.github.io/assets/switch/hardware-topology.svg" type="image/svg+xml"/>
-    </item>
-    <item>
-      <title>一帧以太网报文如何穿过 Switch：VLAN、VTU、FID 与 ATU 转发机制</title>
-      <link>https://binkyle.github.io/blog/Ethernet/Switch/vlan-forwarding.html</link>
-      <guid>https://binkyle.github.io/blog/Ethernet/Switch/vlan-forwarding.html</guid>
-      <source url="https://binkyle.github.io/rss.xml">一帧以太网报文如何穿过 Switch：VLAN、VTU、FID 与 ATU 转发机制</source>
-      <description>用一帧虚拟传感器报文串起 VLAN 分类、VTU/FID、MAC 学习、ATU 查找、端口过滤和出口 Tag 处理，解释转发与丢帧条件。</description>
-      <category>车载通信与网络</category>
-      <pubDate>Wed, 14 Oct 2026 00:00:00 GMT</pubDate>
-      <content:encoded><![CDATA[<p>以太网帧进入 Switch 后，会先获得交换机内部使用的 VLAN 身份，再经过成员关系、目的地址和端口策略的共同筛选，最终形成出口集合。<strong>PVID 负责默认分类，VTU 维护 VLAN 关系，FID 选择地址数据库，ATU/FDB 提供目的地址到端口的映射。</strong> 它们各自解决不同问题，只有组合起来才能解释一帧报文的完整去向。</p>
-<p>本文承接<a href="/blog/Ethernet/Switch/hardware-architecture.html" target="_blank">硬件架构与接口</a>，用匿名化虚拟网络展开二层转发。<a href="/blog/Ethernet/Switch/configuration-mdio.html" target="_blank">配置与 MDIO 管理</a>会继续说明如何确认这些规则已经写入硬件。</p>
-<p>文中 VTU、ATU 和 802.1Q Mode 使用 Marvell 部分交换芯片家族常见的名称。它们有助于理解实现，但不代表所有 Switch 都具有相同单元、寄存器布局或模式细节。以下步骤是逻辑分析顺序，不是对某颗芯片内部流水线级数的断言。</p>
-<h2>1. 虚拟网络与一帧输入</h2>
-<p>所有参数均为演示数据。MAC 使用本地管理的单播地址，不来自实际设备。假设链路正常、端口处于 Forwarding、没有额外的 ACL/TCAM 重定向或丢弃规则。</p>
-<p>| 端口 | 虚拟节点 | MAC 地址 | 接口上的业务 |<br>
-|</p>
-]]></content:encoded>
-      <enclosure url="https://binkyle.github.io/assets/switch/forwarding-flow.svg" type="image/svg+xml"/>
-    </item>
-    <item>
-      <title>嵌入式堆栈使用量测量：Stack Painting、High-Water Mark 与溢出监控</title>
-      <link>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/stack-measurement.html</link>
-      <guid>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/stack-measurement.html</guid>
-      <source url="https://binkyle.github.io/rss.xml">嵌入式堆栈使用量测量：Stack Painting、High-Water Mark 与溢出监控</source>
-      <description>从栈内存模型出发，理解填充与历史水位，连接 Guard、AUTOSAR OS 查询和可独立运行的 C99 Stack Observer，形成可验证的栈容量与安全裕度观测方法。</description>
-      <category>嵌入式系统与 AUTOSAR</category>
-      <pubDate>Sat, 10 Oct 2026 03:09:27 GMT</pubDate>
-      <content:encoded><![CDATA[<p>CPU 时间与栈空间是嵌入式软件的两项基础资源。<a href="/blog/Autosar/RuntimeMeasurement/cpu-load.html" target="_blank">CPU Load</a>描述一个核在窗口内的工作比例，Stack Measurement 则记录任务、中断和系统执行路径对栈空间的历史需求。把两类指标放在一起，可以同时观察执行预算与内存裕度。</p>
-<p>本文从栈的基本模型讲起，介绍 Stack Painting 和 High-Water Mark，再连接边界监控、TC397/AUTOSAR 接入与开源实现。配套的 <a href="https://github.com/binkyle/autosar-module-lab/tree/main/embedded-runtime-observer" target="_blank" rel="noopener noreferrer">Stack Observer</a> 已完成 Host 测试；目标平台的编译、调用权限和硬件对照分别验证。</p>
-<h2>1. 栈测量与容量规划</h2>
-<p>栈容量由配置与链接布局决定，运行需求则随调用深度、局部变量、编译优化、中断嵌套及执行路径变化。历史峰值为容量选择提供运行证据，剩余裕度帮助安排后续功能与压力场景。</p>
-<p>一份可解释的结果应同时带上容量、峰值、单位、统计对象和有效性。例如：</p>
-<p>| 指标 | 模拟值 | 含义 |<br>
-|</p>
-]]></content:encoded>
-      <enclosure url="https://binkyle.github.io/assets/rtm/rtm_stack_layout.svg" type="image/svg+xml"/>
-    </item>
-    <item>
-      <title>TC397 与 AUTOSAR 的运行时测量接入</title>
-      <link>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/autosar-integration.html</link>
-      <guid>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/autosar-integration.html</guid>
-      <source url="https://binkyle.github.io/rss.xml">TC397 与 AUTOSAR 的运行时测量接入</source>
-      <description>将 STM、Task Hook、ISR 边界和每核快照接入通用 Runtime Measurement 核心，形成可复现模型与分阶段的目标验证流程。</description>
-      <category>嵌入式系统与 AUTOSAR</category>
-      <pubDate>Fri, 09 Oct 2026 10:00:27 GMT</pubDate>
-      <content:encoded><![CDATA[<p>通用测量核心与 ECU 工程之间的连接集中在平台适配层：它识别实际执行者，读取 STM 时间，形成串行事件，并把统计副本交给报告路径。</p>
-<p>对于 TC397 与 AUTOSAR，可以按“Host 模型 → 时间源 → 调度和中断边界 → 周期采样 → 多核发布 → 目标验证”的顺序完成接入。各步骤分别建立一项明确的契约，组合后得到可解释的每核时间账本。</p>
-<p>本文使用<a href="https://github.com/binkyle/autosar-module-lab/tree/main/embedded-runtime-observer" target="_blank" rel="noopener noreferrer">配套模块</a>中的独立 Hook 模型讲解接口。C99 核心与 Mock 示例已通过 Host 验证；具体 MICROSAR/TASKING/TC397 接入处于 Experimental / Unverified，目标参数和实际 Hook 顺序由工程配置确定。</p>
-<h2>1. 建立可复现的 Host 基线</h2>
-<p>克隆仓库，进入模块目录：</p>
-<div class="language-sh line-numbers-mode" data-highlighter="shiki" data-ext="sh" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-sh"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> clone</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> https://github.com/binkyle/autosar-module-lab.git</span></span>
-<span class="line"><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">cd</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> autosar-module-lab/embedded-runtime-observer</span></span>
-<span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">make</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> test</span></span>
-<span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">./build/autosar_concept</span></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>输出：</p>
-<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>Mock hooks: task=30 kernel=4 ISR=10 idle=56 load=44.0%</span></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><p>这个模型显式记录 30 ticks Task、10 ticks ISR 和 4 ticks 调度空档，共 44 ticks Busy。Kernel 在这里表示已标注的 Post/Pre 之间空档。模型为真实适配提供一组稳定的输入和期望值。</p>
-<p>模块还提供基础负载、嵌套 ISR、多核、Mock 寄存器、栈模拟和 OS 栈查询示例。接入过程中可以对照它们，逐项确认平台事件与核心语义一致。</p>
-<h2>2. 配置每核上下文和 ID 映射</h2>
-<p>每个逻辑核分配独立的 <code>rtm_core_t</code>，由该核执行事件更新和快照复制。适配层建立 Task ID、ISR/RTM Point ID 与观测 ID 的查表映射，并为 Idle 和已覆盖的调度空档使用专用标识。</p>
-<p>| 平台信息 | 映射到核心 |<br>
-|</p>
-]]></content:encoded>
-    </item>
-    <item>
-      <title>嵌入式 CPU 负载测量：Task、Idle 与 ISR</title>
-      <link>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/cpu-load.html</link>
-      <guid>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/cpu-load.html</guid>
-      <source url="https://binkyle.github.io/rss.xml">嵌入式 CPU 负载测量：Task、Idle 与 ISR</source>
-      <description>以每核执行时间为主线，建立 Task、Idle、ISR 与调度空档的统一模型，说明中断嵌套、固定窗口和 CPU Load 的计算方法。</description>
-      <category>嵌入式系统与 AUTOSAR</category>
-      <pubDate>Fri, 09 Oct 2026 10:00:27 GMT</pubDate>
-      <content:encoded><![CDATA[<p>CPU 负载描述一个核在统计窗口内用于执行工作的时间比例。把任务调度与中断处理放到同一条时间线上，就能同时解释负载百分比、任务占用和 ISR 开销。</p>
-<p>以 100 ms 为例：Task 执行 20 ms，ISR 执行 10 ms，Idle 执行 70 ms，CPU Load 为 30%。这里的关键是将每段物理时间分配给它的实际执行者，再在统一窗口内汇总。</p>
-<p>本文是<a href="/blog/Autosar/RuntimeMeasurement/" target="_blank">运行时测量专题</a>的第一篇，先建立时间模型。<a href="/blog/Autosar/RuntimeMeasurement/framework.html" target="_blank">第二篇</a>将模型实现为 C99 核心，<a href="/blog/Autosar/RuntimeMeasurement/autosar-integration.html" target="_blank">第三篇</a>介绍平台接入。</p>
-<p><a href="/blog/Autosar/RuntimeMeasurement/stack-measurement.html" target="_blank">栈资源观测</a>沿用明确对象、单位和有效性的思路，进一步记录 Task/ISR 的历史内存需求。</p>
-<h2>1. 统一的时间分类</h2>
-<p>在一个核上，当前执行者可以归入 Task、Idle、ISR，或者已明确标注的调度空档。四类采用相同的计时单位和统计范围：</p>
-<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>Total = Task + Idle + ISR + Kernel</span></span>
-<span class="line"><span>Busy  = Total - Idle</span></span>
-<span class="line"><span>CPU Load = Busy / Total × 100%</span></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>| 指标 | 统计对象 | 使用方式 |<br>
-|</p>
-]]></content:encoded>
-      <enclosure url="https://binkyle.github.io/assets/rtm/rtm_idle_isr_timeline.svg" type="image/svg+xml"/>
-    </item>
-    <item>
-      <title>轻量级 Runtime Measurement 框架设计</title>
-      <link>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/framework.html</link>
-      <guid>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/framework.html</guid>
-      <source url="https://binkyle.github.io/rss.xml">轻量级 Runtime Measurement 框架设计</source>
-      <description>以显式事件、每核状态与复制式快照构建 C99 时间核心，并在同一框架中独立扩展 Stack Observer 的容量与水位观测。</description>
-      <category>嵌入式系统与 AUTOSAR</category>
-      <pubDate>Fri, 09 Oct 2026 10:00:27 GMT</pubDate>
-      <content:encoded><![CDATA[<p>运行时测量可以分成三个职责：平台产生执行事件，核心维护时间归属，报告路径输出统计结果。显式的分工使同一个算法可以在 PC、裸机和 RTOS 环境中运行。</p>
-<p><code>embedded-runtime-observer</code> 采用 C99 和静态内存实现这一模型。Task、Idle、ISR、调度空档和函数点共用明确的事件边界，在线统计与可选 Trace 各自保留输出状态。v0.2.0 增加独立 Stack Observer，将栈内存需求接入同一报告层。</p>
-<p>本文承接<a href="/blog/Autosar/RuntimeMeasurement/cpu-load.html" target="_blank">时间模型</a>，沿着事件进入核心后的处理过程介绍框架设计。</p>
-<h2>1. 事件驱动的分层结构</h2>
-<figure><img src="/assets/rtm/rtm_architecture.svg" alt="时间核心与独立 Stack Observer 的采集、统计和副本报告分层" tabindex="0" loading="lazy"><figcaption>时间核心与独立 Stack Observer 的采集、统计和副本报告分层</figcaption></figure>
-<p>平台层提供 Timer、核 ID、任务映射、Hook 和临界区。核心接受显式时间戳：</p>
-<div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">rtm_task_switch</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">core</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, now, task_id);</span></span>
-<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">rtm_isr_enter</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">core</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, now, isr_id);</span></span>
-<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">rtm_isr_exit</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">core</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, now, isr_id);</span></span>
-<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">rtm_point_begin</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">core</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, now, point_id);</span></span>
-<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">rtm_point_end</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">core</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, now, point_id);</span></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>每次事件先把旧执行上下文累计到 <code>now</code>，再更新状态。旧执行者拥有边界之前的时间，新执行者从边界开始运行。这个顺序让时间分区与状态转换保持一致。</p>
-<p>Mock Clock 可以将输入固定为 10、20、30、50 等数值，独立验证结果。硬件读时钟、OS 接口和统计输出由各自适配层完成，核心接口保持稳定。</p>
-<h2>2. 每核执行上下文与 ISR 栈</h2>
-<p>每个核拥有独立的 <code>rtm_core_t</code>。Task、Idle 或 Kernel 是底层执行者，ISR 调用栈保留中断期间的嵌套关系。</p>
-<p>| 事件 | 时间结算 | 状态更新 |<br>
-|</p>
-]]></content:encoded>
-      <enclosure url="https://binkyle.github.io/assets/rtm/rtm_architecture.svg" type="image/svg+xml"/>
-    </item>
     <item>
       <title>跨核不是缓存问题：从 AUTOSAR COM Deferred EventCache 看事件与状态一致性</title>
       <link>https://binkyle.github.io/blog/Autosar/autosar_com_cross_core_deferred_eventcache_consistency.html</link>
@@ -171,7 +22,17 @@
       <description>从可构造的双核交错分析事件与状态的不一致，区分缓存可见性、原子性、顺序与跨核互斥。</description>
       <category>嵌入式系统与 AUTOSAR</category>
       <pubDate>Fri, 09 Oct 2026 00:00:00 GMT</pubDate>
-      <content:encoded><![CDATA[<p>多核嵌入式开发里有一种容易产生误判的现象：<strong>共享变量放在 NonCached RAM，读写都是简单赋值，两边也都进入了 SchM Exclusive Area，但事件队列和业务状态仍可能不一致。</strong></p>
+      <content:encoded><![CDATA[<aside class="evidence-note" aria-labelledby="evidence-summary">
+<h2>先看结论与证据边界</h2>
+<p><strong>核心问题：</strong> 事件已经出队，为什么 Rx Buffer 的数据仍没有被处理？</p>
+<ul>
+<li><strong>关键结论：</strong> 在本文的 <code>Put → Copy → SetLength</code> 模型中，消费者可以先取走事件、再读到尚未置位的 Pending。NonCached 与本核关中断都不能把这组操作自动变成跨核事务。</li>
+<li><strong>证据性质：</strong> 第 4 节是满足指定前提的交错反例；示意代码不代表所有 AUTOSAR COM 实现。OS 规范只支撑相应 OS 原语的语义，不为厂商 EventCache 实现背书。</li>
+<li><strong>验证入口：</strong> 先核对实际 SchM 展开、生产/消费顺序与 Buffer 所有权，再按第 11 节清单检查满队列、Group 状态与补偿路径。</li>
+</ul>
+<p>内容结构复核：2026-10-15。本文没有新增 ECU 实测结果。</p>
+</aside>
+<p>多核嵌入式开发里有一种容易产生误判的现象：<strong>共享变量放在 NonCached RAM，读写都是简单赋值，两边也都进入了 SchM Exclusive Area，但事件队列和业务状态仍可能不一致。</strong></p>
 <p>这里不需要先假设硬件缓存出错。更值得追问的是：</p>
 <blockquote>
 <p><strong>“事件已发布”与“事件对应的数据已就绪”，是不是同一个不可分割的状态转换？</strong></p>
@@ -202,6 +63,66 @@
 ]]></content:encoded>
     </item>
     <item>
+      <title>嵌入式 CPU 负载测量：Task、Idle 与 ISR</title>
+      <link>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/cpu-load.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/cpu-load.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">嵌入式 CPU 负载测量：Task、Idle 与 ISR</source>
+      <description>以每核执行时间为主线，建立 Task、Idle、ISR 与调度空档的统一模型，说明中断嵌套、固定窗口和 CPU Load 的计算方法。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Fri, 09 Oct 2026 10:00:27 GMT</pubDate>
+      <content:encoded><![CDATA[<aside class="evidence-note" aria-labelledby="evidence-summary">
+<h2>CPU Load 的统计口径</h2>
+<p><strong>关键结论：</strong> 在同一核、同一窗口和同一时钟口径内，将物理时间分配给 Task、Idle、ISR 与已识别的 Kernel gap，再计算 <code>(Total − Idle) / Total</code>。嵌套 ISR 用 exclusive 时间汇总物理开销，避免重复计数。</p>
+<ul>
+<li><strong>前提条件：</strong> Task/ISR 进出边界、Idle 映射与周期采样必须覆盖实际执行路径；回绕、调试暂停、低功耗与时钟变化按第 6 节约束处理。</li>
+<li><strong>复现入口：</strong> 第 7 节给出配套公开模块的 <code>make test</code> 与 <code>./build/basic</code>。30% 的例子使用 Mock ticks，不是 TC397 运行测量。</li>
+<li><strong>阅读路径：</strong> 先看本篇时间模型，再看<a href="/blog/Autosar/RuntimeMeasurement/framework.html" target="_blank">框架设计</a>与<a href="/blog/Autosar/RuntimeMeasurement/autosar-integration.html" target="_blank">平台接入</a>。跨核状态发布另见<a href="/blog/Autosar/autosar_com_cross_core_deferred_eventcache_consistency.html" target="_blank">COM EventCache 一致性</a>。</li>
+</ul>
+<p>内容结构复核：2026-10-15。目标平台开销仍需单独测量。</p>
+</aside>
+<p>CPU 负载描述一个核在统计窗口内用于执行工作的时间比例。把任务调度与中断处理放到同一条时间线上，就能同时解释负载百分比、任务占用和 ISR 开销。</p>
+<p>以 100 ms 为例：Task 执行 20 ms，ISR 执行 10 ms，Idle 执行 70 ms，CPU Load 为 30%。这里的关键是将每段物理时间分配给它的实际执行者，再在统一窗口内汇总。</p>
+<p>本文是<a href="/blog/Autosar/RuntimeMeasurement/" target="_blank">运行时测量专题</a>的第一篇，先建立时间模型。<a href="/blog/Autosar/RuntimeMeasurement/framework.html" target="_blank">第二篇</a>将模型实现为 C99 核心，<a href="/blog/Autosar/RuntimeMeasurement/autosar-integration.html" target="_blank">第三篇</a>介绍平台接入。</p>
+<p><a href="/blog/Autosar/RuntimeMeasurement/stack-measurement.html" target="_blank">栈资源观测</a>沿用明确对象、单位和有效性的思路，进一步记录 Task/ISR 的历史内存需求。</p>
+<h2>1. 统一的时间分类</h2>
+<p>在一个核上，当前执行者可以归入 Task、Idle、ISR，或者已明确标注的调度空档。四类采用相同的计时单位和统计范围：</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>Total = Task + Idle + ISR + Kernel</span></span>
+<span class="line"><span>Busy  = Total - Idle</span></span>
+<span class="line"><span>CPU Load = Busy / Total × 100%</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>| 指标 | 统计对象 | 使用方式 |<br>
+|</p>
+]]></content:encoded>
+      <enclosure url="https://binkyle.github.io/assets/rtm/rtm_idle_isr_timeline.svg" type="image/svg+xml"/>
+    </item>
+    <item>
+      <title>嵌入式堆栈使用量测量：Stack Painting、High-Water Mark 与溢出监控</title>
+      <link>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/stack-measurement.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/stack-measurement.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">嵌入式堆栈使用量测量：Stack Painting、High-Water Mark 与溢出监控</source>
+      <description>从栈内存模型出发，理解填充与历史水位，连接 Guard、AUTOSAR OS 查询和可独立运行的 C99 Stack Observer，形成可验证的栈容量与安全裕度观测方法。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Sat, 10 Oct 2026 03:09:27 GMT</pubDate>
+      <content:encoded><![CDATA[<aside class="evidence-note" aria-labelledby="evidence-summary">
+<h2>栈水位能证明什么？</h2>
+<p><strong>关键结论：</strong> Stack Painting 通过填充图案的变化观察历史栈需求；同一 epoch 保留已观察峰值。它不等于当前 SP 深度，也不能单独证明没有溢出。</p>
+<ul>
+<li><strong>前提与限制：</strong> painting 只用于明确拥有且安全静止的区域。图案碰撞、预留但未写入的空间以及测试覆盖不足都会限制解释；Guard、MPU 与水位各自解决不同问题。</li>
+<li><strong>证据分层：</strong> 第 8 节的容量、峰值与性能数据来自公开 Host 模拟与验证记录；Vector 查询属于供应商扩展。TC397/TASKING、OS 权限和 XSignal 成本没有由这些 Host 测试建立。</li>
+<li><strong>复现入口：</strong> 从第 8 节命令与<a href="https://github.com/binkyle/autosar-module-lab/blob/main/embedded-runtime-observer/docs/validation/stack-validation.md" target="_blank" rel="noopener noreferrer">公开验证记录</a>核对环境、单位、扫描工作量和已知限制；再与<a href="/blog/Autosar/RuntimeMeasurement/cpu-load.html" target="_blank">CPU 时间模型</a>分别建立预算。</li>
+</ul>
+<p>内容结构复核：2026-10-15。未追加新的硬件数据或 WCET 结论。</p>
+</aside>
+<p>CPU 时间与栈空间是嵌入式软件的两项基础资源。<a href="/blog/Autosar/RuntimeMeasurement/cpu-load.html" target="_blank">CPU Load</a>描述一个核在窗口内的工作比例，Stack Measurement 则记录任务、中断和系统执行路径对栈空间的历史需求。把两类指标放在一起，可以同时观察执行预算与内存裕度。</p>
+<p>本文从栈的基本模型讲起，介绍 Stack Painting 和 High-Water Mark，再连接边界监控、TC397/AUTOSAR 接入与开源实现。配套的 <a href="https://github.com/binkyle/autosar-module-lab/tree/main/embedded-runtime-observer" target="_blank" rel="noopener noreferrer">Stack Observer</a> 已完成 Host 测试；目标平台的编译、调用权限和硬件对照分别验证。</p>
+<h2>1. 栈测量与容量规划</h2>
+<p>栈容量由配置与链接布局决定，运行需求则随调用深度、局部变量、编译优化、中断嵌套及执行路径变化。历史峰值为容量选择提供运行证据，剩余裕度帮助安排后续功能与压力场景。</p>
+<p>一份可解释的结果应同时带上容量、峰值、单位、统计对象和有效性。例如：</p>
+<p>| 指标 | 模拟值 | 含义 |<br>
+|</p>
+]]></content:encoded>
+      <enclosure url="https://binkyle.github.io/assets/rtm/rtm_stack_layout.svg" type="image/svg+xml"/>
+    </item>
+    <item>
       <title>从 .c 到 .a 再到 ELF：TC397 + TASKING 静态库生产与链接全流程</title>
       <link>https://binkyle.github.io/blog/Autosar/TC397_TASKING_Static_Library_From_Source_To_ELF.html</link>
       <guid>https://binkyle.github.io/blog/Autosar/TC397_TASKING_Static_Library_From_Source_To_ELF.html</guid>
@@ -209,7 +130,17 @@
       <description>沿着 .c、.o、.a 与 ELF 追踪编译、归档、链接和集成契约，厘清库的生产与使用边界。</description>
       <category>嵌入式系统与 AUTOSAR</category>
       <pubDate>Wed, 30 Sep 2026 00:00:00 GMT</pubDate>
-      <content:encoded><![CDATA[<p>在嵌入式工程里，经常会遇到两种静态库场景：</p>
+      <content:encoded><![CDATA[<aside class="evidence-note" aria-labelledby="evidence-summary">
+<h2>从库交付到最终镜像</h2>
+<p><strong>关键结论：</strong> Compile 产生可重定位 Object，Archive 组织库成员，Link 完成符号解析、重定位与内存放置。拿到 <code>.a</code> 不代表已经得到可运行程序，也不能用库文件大小直接推算最终 Flash 增量。</p>
+<ul>
+<li><strong>适用范围：</strong> 本文围绕 TC397 + TASKING 的概念与集成契约展开。实际命令参数、ABI、库变体与 LSL 约束必须对应所用工具链版本。</li>
+<li><strong>验证方法：</strong> 沿着 Object、归档成员、未解析符号与最终 ELF/Map 逐层核对；代码与命令用于解释机制，不能代替目标工程的链接与运行验证。</li>
+<li><strong>相关问题：</strong> 编译与放置契约明确后，可继续阅读<a href="/blog/Autosar/RuntimeMeasurement/autosar-integration.html" target="_blank">运行时测量接入</a>，区分“链接成功”与“运行观测有效”。</li>
+</ul>
+<p>内容结构复核：2026-10-15。本次编辑未执行 TASKING 或 ECU 构建。</p>
+</aside>
+<p>在嵌入式工程里，经常会遇到两种静态库场景：</p>
 <ul>
 <li><strong>作为 Producer</strong>：把自己的源码编译成 <code>.a</code>，交给其他团队或第三方集成；</li>
 <li><strong>作为 Consumer</strong>：拿到供应商提供的 <code>.a</code>，再链接进自己的 ECU 工程。</li>
@@ -255,6 +186,125 @@
 <p>| 阶段 | 工具 | 作用 |<br>
 |</p>
 ]]></content:encoded>
+    </item>
+    <item>
+      <title>一帧以太网报文如何穿过 Switch：VLAN、VTU、FID 与 ATU 转发机制</title>
+      <link>https://binkyle.github.io/blog/Ethernet/Switch/vlan-forwarding.html</link>
+      <guid>https://binkyle.github.io/blog/Ethernet/Switch/vlan-forwarding.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">一帧以太网报文如何穿过 Switch：VLAN、VTU、FID 与 ATU 转发机制</source>
+      <description>用一帧虚拟传感器报文串起 VLAN 分类、VTU/FID、MAC 学习、ATU 查找、端口过滤和出口 Tag 处理，解释转发与丢帧条件。</description>
+      <category>车载通信与网络</category>
+      <pubDate>Wed, 14 Oct 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<aside class="evidence-note" aria-labelledby="evidence-summary">
+<h2>一帧报文的判断要点</h2>
+<p><strong>关键结论：</strong> VLAN 决定交换域与合格成员，FID 参与地址库选择，FDB 给出目的候选；命中目的端口后，仍需满足当前路径的端口策略、转发状态与出口 Tag 规则。</p>
+<ul>
+<li><strong>适用范围：</strong> 本文使用匿名虚拟网络。VTU/ATU 名称及模式来自部分 Marvell 家族的公开实现，逻辑步骤不等于实际芯片流水线。</li>
+<li><strong>如何复核：</strong> 保存原始入帧的 Tag、SA、DA；依次核对入口分类、VTU/FID、FDB、相关端口限制，再以出口抓包与计数器对照。第 11 节列出可改变的单一条件。</li>
+<li><strong>已知限制：</strong> 集合交集是本文普通转发模型的排查工具；ACL、Trap、Trunk 等特殊路径需按器件单独分析，不能把 MCU 中缺少某个调用视为硬件默认状态的证明。</li>
+</ul>
+<p>内容结构复核：2026-10-15。文中数值是演示参数。</p>
+</aside>
+<p>以太网帧进入 Switch 后，会先获得交换机内部使用的 VLAN 身份，再经过成员关系、目的地址和端口策略的共同筛选，最终形成出口集合。<strong>PVID 负责默认分类，VTU 维护 VLAN 关系，FID 选择地址数据库，ATU/FDB 提供目的地址到端口的映射。</strong> 它们各自解决不同问题，只有组合起来才能解释一帧报文的完整去向。</p>
+<p>本文承接<a href="/blog/Ethernet/Switch/hardware-architecture.html" target="_blank">硬件架构与接口</a>，用匿名化虚拟网络展开二层转发。<a href="/blog/Ethernet/Switch/configuration-mdio.html" target="_blank">配置与 MDIO 管理</a>会继续说明如何确认这些规则已经写入硬件。</p>
+<p>文中 VTU、ATU 和 802.1Q Mode 使用 Marvell 部分交换芯片家族常见的名称。它们有助于理解实现，但不代表所有 Switch 都具有相同单元、寄存器布局或模式细节。以下步骤是逻辑分析顺序，不是对某颗芯片内部流水线级数的断言。</p>
+<h2>1. 虚拟网络与一帧输入</h2>
+<p>所有参数均为演示数据。MAC 使用本地管理的单播地址，不来自实际设备。假设链路正常、端口处于 Forwarding、没有额外的 ACL/TCAM 重定向或丢弃规则。</p>
+<p>| 端口 | 虚拟节点 | MAC 地址 | 接口上的业务 |<br>
+|</p>
+]]></content:encoded>
+      <enclosure url="https://binkyle.github.io/assets/switch/forwarding-flow.svg" type="image/svg+xml"/>
+    </item>
+    <item>
+      <title>车载 Switch 配置的生效机制：固件初始化、UMSD 与 MDIO 管理链路</title>
+      <link>https://binkyle.github.io/blog/Ethernet/Switch/configuration-mdio.html</link>
+      <guid>https://binkyle.github.io/blog/Ethernet/Switch/configuration-mdio.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">车载 Switch 配置的生效机制：固件初始化、UMSD 与 MDIO 管理链路</source>
+      <description>区分 XML 离线配置、固件初始化、UMSD/MCAL 管理访问与 RTE 记录上报，计算 MDIO 事务开销，并介绍配置冲突的只读验证方法。</description>
+      <category>车载通信与网络</category>
+      <pubDate>Wed, 14 Oct 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>Switch 的运行状态由已经完成的初始化和管理操作共同形成。XML 描述期望配置，C 代码表达软件动作，运行时寄存器与表项反映当前硬件状态。<strong>看见配置值、找到 API 名称和确认配置已经生效，是三件不同的事。</strong> 沿着配置消费、构建、执行、硬件访问和读回建立连续关系，才能解释它们之间的差异。</p>
+<p>本文是<a href="/blog/Ethernet/Switch/" target="_blank">车载以太网 Switch 专栏</a>的第三篇，结合<a href="/blog/Ethernet/Switch/hardware-architecture.html" target="_blank">硬件连接</a>与<a href="/blog/Ethernet/Switch/vlan-forwarding.html" target="_blank">二层转发</a>，说明配置生效、UMSD/MDIO 管理与 AUTOSAR 集成。所有代码均为自行构造的示意代码，不引用内部驱动、配置原件或专有寄存器序列。</p>
+<h2>1. 上电后，谁把端口配置好</h2>
+<p>Switch 一般先经历供电、参考时钟稳定、复位释放、Strap 采样和硬件默认初始化。随后怎样建立端口与转发表，取决于芯片和系统：有的器件依赖外部主机，有的具备内部处理器与固件，有的可以读取非易失性配置。</p>
+<p>| 阶段或来源 | 可能承担的工作 | 不能直接推出的结论 |<br>
+|</p>
+]]></content:encoded>
+      <enclosure url="https://binkyle.github.io/assets/switch/management-paths.svg" type="image/svg+xml"/>
+    </item>
+    <item>
+      <title>车载以太网交换芯片架构：从 MAC、PHY 到 RGMII 与 SerDes</title>
+      <link>https://binkyle.github.io/blog/Ethernet/Switch/hardware-architecture.html</link>
+      <guid>https://binkyle.github.io/blog/Ethernet/Switch/hardware-architecture.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">车载以太网交换芯片架构：从 MAC、PHY 到 RGMII 与 SerDes</source>
+      <description>以虚拟车载网络解释 GMAC 与 Switch 的分工、PHY 的内部层次，以及 RGMII、SGMII、SerDes 和 T1 铜缆接口的连接边界。</description>
+      <category>车载通信与网络</category>
+      <pubDate>Wed, 14 Oct 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>车载以太网交换芯片连接传感器、计算节点和控制节点，完成端口间报文转发。理解它的硬件架构，需要同时看清三个对象：<strong>MAC 处理以太网帧，PHY 实现物理链路，Switch 连接多个端口并决定帧的出口。</strong> RGMII、SGMII 和高速 SerDes 则处于不同的连接边界，不能仅根据接口名字判断网线怎样接。</p>
+<p>本文是<a href="/blog/Ethernet/Switch/" target="_blank">车载以太网 Switch 专栏</a>的第一篇。这里先建立连接模型，<a href="/blog/Ethernet/Switch/vlan-forwarding.html" target="_blank">第二篇</a>讨论一帧报文的转发，<a href="/blog/Ethernet/Switch/configuration-mdio.html" target="_blank">第三篇</a>讨论管理与配置生效。</p>
+<h2>1. GMAC 与 Switch 的分工</h2>
+<p>MCU 集成 Gigabit Ethernet MAC，意味着它能够收发自身的以太网帧。典型收发路径中，MAC 与 DMA、描述符、缓冲区和中断配合，把网络数据交给 MCU 软件，或者将软件准备好的数据送入链路。</p>
+<p>Switch 面向多个端口：从某个端口接收帧，根据 VLAN、目的 MAC、端口状态及策略，选择一个或多个出口。多个 DMA 队列仍是同一网络接口内部的资源，不会自动变成多个可接传感器的物理端口。</p>
+<p>Infineon 的 TC3xx GETH 公开培训资料列出了 10/100/1000 Mbit/s MAC、MII/RMII/RGMII、DMA 队列及过滤能力。[1] 这说明 GETH 可以为 MCU 提供网络连接；是否具有独立的多端口交换能力，要看芯片的交换结构，不能由“有 MAC”或“有 VLAN 过滤”推出。</p>
+<p>| 对象 | 主要职责 | 典型连接 |<br>
+|</p>
+]]></content:encoded>
+      <enclosure url="https://binkyle.github.io/assets/switch/hardware-topology.svg" type="image/svg+xml"/>
+    </item>
+    <item>
+      <title>TC397 与 AUTOSAR 的运行时测量接入</title>
+      <link>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/autosar-integration.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/autosar-integration.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">TC397 与 AUTOSAR 的运行时测量接入</source>
+      <description>将 STM、Task Hook、ISR 边界和每核快照接入通用 Runtime Measurement 核心，形成可复现模型与分阶段的目标验证流程。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Fri, 09 Oct 2026 10:00:27 GMT</pubDate>
+      <content:encoded><![CDATA[<p>通用测量核心与 ECU 工程之间的连接集中在平台适配层：它识别实际执行者，读取 STM 时间，形成串行事件，并把统计副本交给报告路径。</p>
+<p>对于 TC397 与 AUTOSAR，可以按“Host 模型 → 时间源 → 调度和中断边界 → 周期采样 → 多核发布 → 目标验证”的顺序完成接入。各步骤分别建立一项明确的契约，组合后得到可解释的每核时间账本。</p>
+<p>本文使用<a href="https://github.com/binkyle/autosar-module-lab/tree/main/embedded-runtime-observer" target="_blank" rel="noopener noreferrer">配套模块</a>中的独立 Hook 模型讲解接口。C99 核心与 Mock 示例已通过 Host 验证；具体 MICROSAR/TASKING/TC397 接入处于 Experimental / Unverified，目标参数和实际 Hook 顺序由工程配置确定。</p>
+<h2>1. 建立可复现的 Host 基线</h2>
+<p>克隆仓库，进入模块目录：</p>
+<div class="language-sh line-numbers-mode" data-highlighter="shiki" data-ext="sh" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-sh"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> clone</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> https://github.com/binkyle/autosar-module-lab.git</span></span>
+<span class="line"><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">cd</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> autosar-module-lab/embedded-runtime-observer</span></span>
+<span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">make</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> test</span></span>
+<span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">./build/autosar_concept</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>输出：</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>Mock hooks: task=30 kernel=4 ISR=10 idle=56 load=44.0%</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><p>这个模型显式记录 30 ticks Task、10 ticks ISR 和 4 ticks 调度空档，共 44 ticks Busy。Kernel 在这里表示已标注的 Post/Pre 之间空档。模型为真实适配提供一组稳定的输入和期望值。</p>
+<p>模块还提供基础负载、嵌套 ISR、多核、Mock 寄存器、栈模拟和 OS 栈查询示例。接入过程中可以对照它们，逐项确认平台事件与核心语义一致。</p>
+<h2>2. 配置每核上下文和 ID 映射</h2>
+<p>每个逻辑核分配独立的 <code>rtm_core_t</code>，由该核执行事件更新和快照复制。适配层建立 Task ID、ISR/RTM Point ID 与观测 ID 的查表映射，并为 Idle 和已覆盖的调度空档使用专用标识。</p>
+<p>| 平台信息 | 映射到核心 |<br>
+|</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>轻量级 Runtime Measurement 框架设计</title>
+      <link>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/framework.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/framework.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">轻量级 Runtime Measurement 框架设计</source>
+      <description>以显式事件、每核状态与复制式快照构建 C99 时间核心，并在同一框架中独立扩展 Stack Observer 的容量与水位观测。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Fri, 09 Oct 2026 10:00:27 GMT</pubDate>
+      <content:encoded><![CDATA[<p>运行时测量可以分成三个职责：平台产生执行事件，核心维护时间归属，报告路径输出统计结果。显式的分工使同一个算法可以在 PC、裸机和 RTOS 环境中运行。</p>
+<p><code>embedded-runtime-observer</code> 采用 C99 和静态内存实现这一模型。Task、Idle、ISR、调度空档和函数点共用明确的事件边界，在线统计与可选 Trace 各自保留输出状态。v0.2.0 增加独立 Stack Observer，将栈内存需求接入同一报告层。</p>
+<p>本文承接<a href="/blog/Autosar/RuntimeMeasurement/cpu-load.html" target="_blank">时间模型</a>，沿着事件进入核心后的处理过程介绍框架设计。</p>
+<h2>1. 事件驱动的分层结构</h2>
+<figure><img src="/assets/rtm/rtm_architecture.svg" alt="时间核心与独立 Stack Observer 的采集、统计和副本报告分层" tabindex="0" loading="lazy"><figcaption>时间核心与独立 Stack Observer 的采集、统计和副本报告分层</figcaption></figure>
+<p>平台层提供 Timer、核 ID、任务映射、Hook 和临界区。核心接受显式时间戳：</p>
+<div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">rtm_task_switch</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">core</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, now, task_id);</span></span>
+<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">rtm_isr_enter</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">core</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, now, isr_id);</span></span>
+<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">rtm_isr_exit</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">core</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, now, isr_id);</span></span>
+<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">rtm_point_begin</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">core</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, now, point_id);</span></span>
+<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">rtm_point_end</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">core</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, now, point_id);</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>每次事件先把旧执行上下文累计到 <code>now</code>，再更新状态。旧执行者拥有边界之前的时间，新执行者从边界开始运行。这个顺序让时间分区与状态转换保持一致。</p>
+<p>Mock Clock 可以将输入固定为 10、20、30、50 等数值，独立验证结果。硬件读时钟、OS 接口和统计输出由各自适配层完成，核心接口保持稳定。</p>
+<h2>2. 每核执行上下文与 ISR 栈</h2>
+<p>每个核拥有独立的 <code>rtm_core_t</code>。Task、Idle 或 Kernel 是底层执行者，ISR 调用栈保留中断期间的嵌套关系。</p>
+<p>| 事件 | 时间结算 | 状态更新 |<br>
+|</p>
+]]></content:encoded>
+      <enclosure url="https://binkyle.github.io/assets/rtm/rtm_architecture.svg" type="image/svg+xml"/>
     </item>
     <item>
       <title>C语言中的Base/Derived模式：用结构体组合实现继承、类型擦除与受控向下转型</title>
@@ -884,6 +934,25 @@
 ]]></content:encoded>
     </item>
     <item>
+      <title>一些算法公式技巧摘录</title>
+      <link>https://binkyle.github.io/blog/algorithm/%E4%B8%80%E4%BA%9B%E7%AE%97%E6%B3%95%E6%9D%82%E8%AE%B0.html</link>
+      <guid>https://binkyle.github.io/blog/algorithm/%E4%B8%80%E4%BA%9B%E7%AE%97%E6%B3%95%E6%9D%82%E8%AE%B0.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">一些算法公式技巧摘录</source>
+      <description>摘录模运算中加法、减法与乘法的基本关系。</description>
+      <category>编程与软件工程</category>
+      <pubDate>Mon, 25 Dec 2023 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>本文摘录模运算中加法、减法和乘法的基本关系。</p>
+<!-- more -->
+<h2>余法运算公式</h2>
+<p>a mod b表示a除以b的余数。有下面的公式：</p>
+<ul>
+<li>(a + b) % p = (a%p + b%p) %p</li>
+<li>(a - b) % p = ((a%p - b%p) + p) %p</li>
+<li>(a * b) % p = (a%p)*(b%p) %p</li>
+</ul>
+]]></content:encoded>
+    </item>
+    <item>
       <title>C++中两种字符串拼接的区别</title>
       <link>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/c__%E4%B8%A4%E7%A7%8D%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%8B%BC%E6%8E%A5%E5%8C%BA%E5%88%AB.html</link>
       <guid>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/c__%E4%B8%A4%E7%A7%8D%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%8B%BC%E6%8E%A5%E5%8C%BA%E5%88%AB.html</guid>
@@ -912,25 +981,6 @@
 ]]></content:encoded>
     </item>
     <item>
-      <title>一些算法公式技巧摘录</title>
-      <link>https://binkyle.github.io/blog/algorithm/%E4%B8%80%E4%BA%9B%E7%AE%97%E6%B3%95%E6%9D%82%E8%AE%B0.html</link>
-      <guid>https://binkyle.github.io/blog/algorithm/%E4%B8%80%E4%BA%9B%E7%AE%97%E6%B3%95%E6%9D%82%E8%AE%B0.html</guid>
-      <source url="https://binkyle.github.io/rss.xml">一些算法公式技巧摘录</source>
-      <description>摘录模运算中加法、减法与乘法的基本关系。</description>
-      <category>编程与软件工程</category>
-      <pubDate>Mon, 25 Dec 2023 00:00:00 GMT</pubDate>
-      <content:encoded><![CDATA[<p>本文摘录模运算中加法、减法和乘法的基本关系。</p>
-<!-- more -->
-<h2>余法运算公式</h2>
-<p>a mod b表示a除以b的余数。有下面的公式：</p>
-<ul>
-<li>(a + b) % p = (a%p + b%p) %p</li>
-<li>(a - b) % p = ((a%p - b%p) + p) %p</li>
-<li>(a * b) % p = (a%p)*(b%p) %p</li>
-</ul>
-]]></content:encoded>
-    </item>
-    <item>
       <title>C/C++语法报错集合汇总</title>
       <link>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/C_C__%E8%AF%AD%E6%B3%95%E6%8A%A5%E9%94%99%E9%9B%86%E5%90%88%E6%B1%87%E6%80%BB.html</link>
       <guid>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/C_C__%E8%AF%AD%E6%B3%95%E6%8A%A5%E9%94%99%E9%9B%86%E5%90%88%E6%B1%87%E6%80%BB.html</guid>
@@ -946,46 +996,6 @@
 <span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">    vector</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x3C;int></span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> nums</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">5</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">);</span></span>
 <span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">};</span></span></code></pre>
 <div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>错误原因是：编译器无法区分该语句是成员变量声明还是成员函数声明。</p>
-]]></content:encoded>
-    </item>
-    <item>
-      <title>C语言sizeof宏分析</title>
-      <link>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/sizeof_in_c.html</link>
-      <guid>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/sizeof_in_c.html</guid>
-      <source url="https://binkyle.github.io/rss.xml">C语言sizeof宏分析</source>
-      <description>一则关于 sizeof、宏与类型大小的旧学习笔记，保留原有分析。</description>
-      <category>编程与软件工程</category>
-      <pubDate>Sat, 09 Dec 2023 00:00:00 GMT</pubDate>
-      <content:encoded><![CDATA[<p>本文主要介绍C语言中sizeof的原理分析</p>
-<!-- more -->
-<h2>原理</h2>
-<p><code>sizeof</code> 是 C 语言的一个运算符，用于返回一个对象或数据类型的大小，以字节为单位。<code>sizeof</code> 运算符在编译时计算，不会执行实际的运算。</p>
-<p>由于 <code>sizeof</code> 是编译时计算大小的，其实现是由编译器提供的，而不是由标准 C 库提供的函数。因此，<code>sizeof</code> 的实现通常依赖于编译器和目标体系结构。</p>
-<h2>实现方式</h2>
-<p>以下是 <code>sizeof</code> 运算符的一种可能的简化实现，假设一个字节等于 8 比特：</p>
-<p>test.c文件</p>
-<div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">#define</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> SIZEOF</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">type</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">) ((</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">size_t</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">)(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">((type</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">*</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">)</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">0</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">)[</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">1</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">]))</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#66707B;--shiki-dark:#BDC4CC">// 示例用法</span></span>
-<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">int</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> main</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">() {</span></span>
-<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">    size_t</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> size </span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">=</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> SIZEOF</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">int</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">);</span></span>
-<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">    return</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> 0</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">;</span></span>
-<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">}</span></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这个宏的工作原理是，将一个空指针转换为类型 <code>type*</code>，然后取数组的第一个元素的地址。由于数组索引是从零开始的，<code>&amp;((type*)0)[1]</code> 计算出第一个元素之后的地址。然后，整个表达式被强制转换为 <code>size_t</code> 类型，以表示大小。</p>
-<p>需要注意的是，这只是一个简化的例子，实际的实现可能更为复杂，以处理各种类型和体系结构。实际的 <code>sizeof</code> 实现通常是由编译器内部提供的，因为它需要考虑各种编译器和目标平台的特定细节。</p>
-<h3>代码分析</h3>
-<p><code>(size_t)(&amp;((type*)0)[1])</code> 的运算顺序可以分解为以下步骤：</p>
-<ol>
-<li><code>(type*)0</code>: 将整数 0 转换为指向类型 <code>type</code> 的指针，得到一个指向类型 <code>type</code> 的空指针。</li>
-<li><code>((type*)0)[1]</code>: 使用上一步得到的空指针进行数组操作，取得数组的第二个元素。这等效于 <code>( ((type*)0) + 1)</code>。请注意，这里并没有实际的数组，只是利用了指针运算的语法。</li>
-<li><code>&amp;((type*)0)[1]</code>: 取得数组第二个元素的地址。</li>
-<li><code>(size_t)(&amp;((type*)0)[1])</code>: 将这个地址转换为 <code>size_t</code> 类型。</li>
-</ol>
-<p>整个表达式的目的是计算一个指向类型 <code>type</code> 的指针，指向一个虚构的数组的第二个元素，然后获取这个元素的地址，并将其转换为 <code>size_t</code> 类型。这种技巧通常用于计算结构体或数组的大小，而无需创建实际的实例。</p>
-<p>通过将test.c文件编译成汇编文件可发现：</p>
-<p><code>SIZEOF(int)</code> 对应汇编文件中的 <code>movq $4, -8(%rbp)</code>，将值 4 存储在相对于 <strong><code>%rbp</code></strong> 偏移为 -8 的位置。</p>
-<p><code>SIZEOF(double)</code> 对应汇编文件中的<code>movq $8, -8(%rbp)</code>，将值 8 存储在相对于 <strong><code>%rbp</code></strong> 偏移为 -8 的位置。</p>
-<p>可见将整数 0 转换为指向类型 <code>type</code> 的指针，得到一个指向类型 <code>type</code> 的空指针时<code>type[0]</code>的地址为0，<code>((type*)0)[1]</code>的偏移量即为type的字节大小，从而可获取type的字节大小</p>
 ]]></content:encoded>
     </item>
     <item>
@@ -1224,6 +1234,46 @@ AUTOSAR中国官方培训课程</p>
 <p>需要注意的是，虽然使用<code>extern</code>可以模拟类和对象的概念，但C语言本身并不直接支持面向对象编程。这只是一种基于C语言的技巧或模式来实现一些面向对象的思想。</p>
 <p>参考链接：<br>
 <a href="https://www.geeksforgeeks.org/difference-between-definition-and-declaration/" target="_blank" rel="noopener noreferrer">Difference between Definition and Declaration - GeeksforGeeks</a></p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>C语言sizeof宏分析</title>
+      <link>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/sizeof_in_c.html</link>
+      <guid>https://binkyle.github.io/blog/programming%20language/C_Cplusplus/sizeof_in_c.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">C语言sizeof宏分析</source>
+      <description>一则关于 sizeof、宏与类型大小的旧学习笔记，保留原有分析。</description>
+      <category>编程与软件工程</category>
+      <pubDate>Sat, 09 Dec 2023 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>本文主要介绍C语言中sizeof的原理分析</p>
+<!-- more -->
+<h2>原理</h2>
+<p><code>sizeof</code> 是 C 语言的一个运算符，用于返回一个对象或数据类型的大小，以字节为单位。<code>sizeof</code> 运算符在编译时计算，不会执行实际的运算。</p>
+<p>由于 <code>sizeof</code> 是编译时计算大小的，其实现是由编译器提供的，而不是由标准 C 库提供的函数。因此，<code>sizeof</code> 的实现通常依赖于编译器和目标体系结构。</p>
+<h2>实现方式</h2>
+<p>以下是 <code>sizeof</code> 运算符的一种可能的简化实现，假设一个字节等于 8 比特：</p>
+<p>test.c文件</p>
+<div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">#define</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> SIZEOF</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">type</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">) ((</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">size_t</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">)(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">((type</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">*</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">)</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">0</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">)[</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">1</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">]))</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#66707B;--shiki-dark:#BDC4CC">// 示例用法</span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">int</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> main</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">() {</span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">    size_t</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> size </span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">=</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> SIZEOF</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">int</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">);</span></span>
+<span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">    return</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> 0</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">;</span></span>
+<span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">}</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这个宏的工作原理是，将一个空指针转换为类型 <code>type*</code>，然后取数组的第一个元素的地址。由于数组索引是从零开始的，<code>&amp;((type*)0)[1]</code> 计算出第一个元素之后的地址。然后，整个表达式被强制转换为 <code>size_t</code> 类型，以表示大小。</p>
+<p>需要注意的是，这只是一个简化的例子，实际的实现可能更为复杂，以处理各种类型和体系结构。实际的 <code>sizeof</code> 实现通常是由编译器内部提供的，因为它需要考虑各种编译器和目标平台的特定细节。</p>
+<h3>代码分析</h3>
+<p><code>(size_t)(&amp;((type*)0)[1])</code> 的运算顺序可以分解为以下步骤：</p>
+<ol>
+<li><code>(type*)0</code>: 将整数 0 转换为指向类型 <code>type</code> 的指针，得到一个指向类型 <code>type</code> 的空指针。</li>
+<li><code>((type*)0)[1]</code>: 使用上一步得到的空指针进行数组操作，取得数组的第二个元素。这等效于 <code>( ((type*)0) + 1)</code>。请注意，这里并没有实际的数组，只是利用了指针运算的语法。</li>
+<li><code>&amp;((type*)0)[1]</code>: 取得数组第二个元素的地址。</li>
+<li><code>(size_t)(&amp;((type*)0)[1])</code>: 将这个地址转换为 <code>size_t</code> 类型。</li>
+</ol>
+<p>整个表达式的目的是计算一个指向类型 <code>type</code> 的指针，指向一个虚构的数组的第二个元素，然后获取这个元素的地址，并将其转换为 <code>size_t</code> 类型。这种技巧通常用于计算结构体或数组的大小，而无需创建实际的实例。</p>
+<p>通过将test.c文件编译成汇编文件可发现：</p>
+<p><code>SIZEOF(int)</code> 对应汇编文件中的 <code>movq $4, -8(%rbp)</code>，将值 4 存储在相对于 <strong><code>%rbp</code></strong> 偏移为 -8 的位置。</p>
+<p><code>SIZEOF(double)</code> 对应汇编文件中的<code>movq $8, -8(%rbp)</code>，将值 8 存储在相对于 <strong><code>%rbp</code></strong> 偏移为 -8 的位置。</p>
+<p>可见将整数 0 转换为指向类型 <code>type</code> 的指针，得到一个指向类型 <code>type</code> 的空指针时<code>type[0]</code>的地址为0，<code>((type*)0)[1]</code>的偏移量即为type的字节大小，从而可获取type的字节大小</p>
 ]]></content:encoded>
     </item>
     <item>

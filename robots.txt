@@ -1,4 +1,4 @@
-User-agent: *
+User-agent: OAI-SearchBot
 Allow: /
 Sitemap: https://binkyle.github.io/sitemap.xml
 
