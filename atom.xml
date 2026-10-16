@@ -3,7 +3,7 @@
   <id>https://binkyle.github.io/</id>
   <title>孤星旅记</title>
   <subtitle>Bin 的工程探索与个人记录。沿着 AUTOSAR、车载网络与底层系统的脉络，在复杂系统中寻找秩序。</subtitle>
-  <updated>2026-10-16T17:21:08.909Z</updated>
+  <updated>2026-10-16T17:22:11.163Z</updated>
   <generator>@vuepress/plugin-feed</generator>
   <link rel="self" href="https://binkyle.github.io/atom.xml"/>
   <link rel="alternate" href="https://binkyle.github.io/"/>
@@ -190,7 +190,7 @@
 <span class="line"><span> │</span></span>
 <span class="line"><span> ▼</span></span>
 <span class="line"><span>HEX / ECU</span></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>重点不是某一个具体库，而是理解 <strong>Compile、Archive、Link</strong> 三个阶段分别做了什么，以及一个嵌入式静态库真正要能够被第三方使用，需要满足哪些条件。</p>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>本文关注 <strong>Compile、Archive、Link</strong> 三个阶段的职责，以及嵌入式静态库交付给第三方时需要满足的条件。</p>
 ]]></summary>
     <content type="html"><![CDATA[<aside class="evidence-note" aria-labelledby="evidence-summary">
 <h2>从库交付到最终镜像</h2>
@@ -225,7 +225,7 @@
 <span class="line"><span> │</span></span>
 <span class="line"><span> ▼</span></span>
 <span class="line"><span>HEX / ECU</span></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>重点不是某一个具体库，而是理解 <strong>Compile、Archive、Link</strong> 三个阶段分别做了什么，以及一个嵌入式静态库真正要能够被第三方使用，需要满足哪些条件。</p>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>本文关注 <strong>Compile、Archive、Link</strong> 三个阶段的职责，以及嵌入式静态库交付给第三方时需要满足的条件。</p>
 <!-- more -->
 <h2>1. Compile、Archive、Link 是三件不同的事</h2>
 <p>很多人第一次接触静态库时，会把“编译一个库”理解成：</p>
@@ -860,13 +860,13 @@
     <id>https://binkyle.github.io/blog/Autosar/DaVinci%20Configurator%20Classic/userManual/userManual.html</id>
     <link href="https://binkyle.github.io/blog/Autosar/DaVinci%20Configurator%20Classic/userManual/userManual.html"/>
     <updated>2024-01-15T00:00:00.000Z</updated>
-    <summary type="html"><![CDATA[<p>本文主要讲解Autosar davinci developer classic基本使用</p>
+    <summary type="html"><![CDATA[<p>本文介绍 DaVinci Developer Classic 的基本操作。</p>
 ]]></summary>
-    <content type="html"><![CDATA[<p>本文主要讲解Autosar davinci developer classic基本使用</p>
+    <content type="html"><![CDATA[<p>本文介绍 DaVinci Developer Classic 的基本操作。</p>
 <!-- more -->
 <h2>1.介绍</h2>
-<p>为autosar ECU 设计软件组件架构，位于V形流程的Application Software Development;<br>
-通过图形视图或文本网格视图，可以设计包括端口、数据在内的软件组件类型、连接器和内部行为。<br>
+<p>DaVinci Developer Classic 用于设计 AUTOSAR ECU 的软件组件架构，对应 V 形流程中的 Application Software Development 阶段。<br>
+通过图形视图或文本网格视图，可以设计软件组件类型、端口、数据、连接器和内部行为。<br>
 </p>
 <h2>2.工作空间(workspace)</h2>
 <figure><figcaption>Alt text</figcaption></figure>
@@ -886,16 +886,16 @@
 <p>在 object browser界面有三种视图：Type-oriented、Package-oriented 和 File-oriented<br>
 </p>
 <ol>
-<li>在 Type-oriented 视图右键即可创建新Application Component type</li>
+<li>在 Type-oriented 视图中右键，创建新的 Application Component Type。</li>
 </ol>
 <figure><figcaption>Alt text</figcaption></figure>
 <h3>2. 理解类型、原型和接口(Types, Prototypes and Interfaces)</h3>
-<p>在Object Browser中，软件组件是类型，端口是接口。只要你<br>
-使用它们，它们就变成了原型</p>
+<p>软件组件类型定义组件的结构与行为；在组合中使用该类型时，会创建引用它的 Component Prototype。Port Prototype 则是组件类型上的端口，通过引用 Port Interface 描述通信内容，端口本身并不是接口。</p>
 <ul>
-<li>Port Interface used by a component type -&gt; Port Prototype</li>
-<li>Component Type in Object Browser used in software design view -&gt; Component Prototype</li>
+<li>Port Prototype in a Component Type -&gt; references a Port Interface</li>
+<li>Component Prototype in a Composition -&gt; references a Component Type</li>
 </ul>
+<p>上述关系见 <a href="https://www.autosar.org/fileadmin/standards/R24-11/CP/AUTOSAR_CP_TPS_SoftwareComponentTemplate.pdf" target="_blank" rel="noopener noreferrer">AUTOSAR Software Component Template（R24-11）</a> 中的 PortPrototype、PortInterface 与 SwComponentPrototype 定义。</p>
 <figure><figcaption>Alt text</figcaption></figure>
 <h3>3. 端口、端口初始值和 数据元素(元数据的一个原子数据单元)</h3>
 <p>在使用应用程序端口之前，必须定义应用程序端口接口。要完全定义端口接口，如果不想使用预定义的数据类型，则必须首先定义数据类型。<br>
@@ -914,7 +914,7 @@
 <h3>6. 为runnable配置触发器、 Port Access</h3>
 <h3>7. 生成模板</h3>
 <p>如果计划手动实现SWC(而不是使用基于模型的代码生成器)，可以生成SWC模板和合约头文件。<br>
-要生成代码，可以在对象浏览器中选择SWC，并通过上下文调用代码生成器菜单</p>
+要生成代码，在对象浏览器中选择 SWC，再通过右键菜单调用代码生成器。</p>
 <figure><figcaption>Alt text</figcaption></figure>
 ]]></content>
     <category term="嵌入式系统与 AUTOSAR"/>
@@ -925,9 +925,9 @@
     <id>https://binkyle.github.io/blog/programming%20language/Python/generate_requirments.html</id>
     <link href="https://binkyle.github.io/blog/programming%20language/Python/generate_requirments.html"/>
     <updated>2024-01-15T00:00:00.000Z</updated>
-    <summary type="html"><![CDATA[<p>如何生成requirements依赖文件</p>
+    <summary type="html"><![CDATA[<p>用pipreqs扫描项目中的导入语句，生成requirements依赖文件。</p>
 ]]></summary>
-    <content type="html"><![CDATA[<p>如何生成requirements依赖文件</p>
+    <content type="html"><![CDATA[<p>用pipreqs扫描项目中的导入语句，生成requirements依赖文件。</p>
 <!-- more -->
 <h2>ppireqs 安装</h2>
 <div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">pip</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> install</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> pipreqs</span></span></code></pre>
@@ -955,7 +955,7 @@
 <span class="line"><span>    --force               Overwrite existing requirements.txt</span></span>
 <span class="line"><span>    --diff &#x3C;file>         Compare modules in requirements.txt to project imports</span></span>
 <span class="line"><span>    --clean &#x3C;file>        Clean up requirements.txt by removing modules that are not imported in project</span></span>
-<span class="line"><span>    --mode &#x3C;scheme>       Enables dynamic versioning with &#x3C;compat>, &#x3C;gt> or &#x3C;non-pin> schemes</span></span>
+<span class="line"><span>    --mode &#x3C;scheme>       Enables dynamic versioning with &#x3C;compat>, &#x3C;gt> or &#x3C;no-pin> schemes</span></span>
 <span class="line"><span>                          &#x3C;compat> | e.g. Flask~=1.1.2</span></span>
 <span class="line"><span>                          &#x3C;gt>     | e.g. Flask>=1.1.2</span></span>
 <span class="line"><span>                          &#x3C;no-pin> | e.g. Flask</span></span></code></pre>
@@ -969,7 +969,8 @@
 <li>更新requirements</li>
 </ol>
 <div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">pipreqs</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --force</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> [location]</span></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><h2>参考链接</h2>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><p>示例中的[location]需要替换为项目目录。--force会重新生成并覆盖已有文件，手工补充的内容需要另行保留。</p>
+<h2>参考链接</h2>
 <p><a href="https://pypi.org/project/pipreqs/" target="_blank" rel="noopener noreferrer">pipreqs</a></p>
 ]]></content>
     <category term="编程与软件工程"/>
@@ -985,10 +986,10 @@
     <content type="html"><![CDATA[<p>venv in python</p>
 <!-- more -->
 <h2>工作原理</h2>
-<p>当Python解释器在虚拟环境中运行时，<a href="https://docs.python.org/3/library/sys.html#sys.prefix" target="_blank" rel="noopener noreferrer">sys.prefix</a>和<a href="https://docs.python.org/3/library/sys.html#sys.exec_prefix" target="_blank" rel="noopener noreferrer">sys.exec_prefix</a>指向虚拟环境的目录，而sys.prefix则指向虚拟环境的目录。<a href="https://docs.python.org/3/library/sys.html#sys.base_prefix" target="_blank" rel="noopener noreferrer">sys.base_prefix</a>和 <a href="https://docs.python.org/3/library/sys.html#sys.base_exec_prefix" target="_blank" rel="noopener noreferrer">sys.base_exec_prefix</a>指向用于创建环境的基本Python。检查sys.prefix != sys.base_prefix来确定当前解释器是否从虚拟环境中运行。</p>
-<p>虚拟环境可以使用其二进制目录(bin on POSIX; Scripts on Windows)。这将把该目录添加到您的PATH中，以便运行python将调用环境的python解释器，并且您可以运行已安装的脚本而不必使用它们的完整路径。激活脚本的调用是特定于平台的(<code>&lt;venv&gt;</code>必须被包含虚拟环境的目录的路径所替换)</p>
+<p>当Python解释器在虚拟环境中运行时，<a href="https://docs.python.org/3/library/sys.html#sys.prefix" target="_blank" rel="noopener noreferrer">sys.prefix</a>和<a href="https://docs.python.org/3/library/sys.html#sys.exec_prefix" target="_blank" rel="noopener noreferrer">sys.exec_prefix</a>指向虚拟环境的目录。<a href="https://docs.python.org/3/library/sys.html#sys.base_prefix" target="_blank" rel="noopener noreferrer">sys.base_prefix</a>和 <a href="https://docs.python.org/3/library/sys.html#sys.base_exec_prefix" target="_blank" rel="noopener noreferrer">sys.base_exec_prefix</a>指向用于创建环境的基本Python。检查sys.prefix != sys.base_prefix来确定当前解释器是否从虚拟环境中运行。</p>
+<p>虚拟环境可以通过其二进制目录(bin on POSIX; Scripts on Windows)中的脚本激活。这会把该目录加到PATH的开头，让python命令调用环境内的解释器，也能直接运行已安装的脚本，不必写出完整路径。激活脚本的调用方式取决于平台和Shell（<code>&lt;venv&gt;</code>必须替换为虚拟环境目录的路径）。</p>
 <h2>配置方法</h2>
-<p>在Windows/Linux上，你可以使用Python的内置工具<code>venv</code>来创建指定版本的虚拟环境。以下以Window环境为例创建指定版本虚拟环境的步骤：</p>
+<p>在Windows/Linux上，你可以使用Python的内置工具<code>venv</code>来创建指定版本的虚拟环境。以下以Windows环境为例：</p>
 <ol>
 <li>
 <p>确保你已经安装了指定版本的Python解释器。<a href="https://www.python.org/downloads/windows/" target="_blank" rel="noopener noreferrer">你可以在Python官方网站</a>上下载和安装所需的<a href="https://www.python.org/downloads/windows/" target="_blank" rel="noopener noreferrer">Python版本</a></p>
@@ -1002,17 +1003,20 @@
 </ol>
 <div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">cd</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> C:</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">\\</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF">Projects</span></span></code></pre>
 <div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><ol start="4">
-<li>创建虚拟环境。使用<code>python</code>命令和<code>m venv</code>参数，后面跟着虚拟环境的名称和Python解释器的路径。例如，如果你想创建一个名为<code>myenv</code>的虚拟环境，并使用Python 3.7版本，可以使用以下命令：</li>
+<li>创建虚拟环境。使用<code>python</code>命令和<code>-m venv</code>参数，后面跟着虚拟环境的目录名。若当前解释器是Python 3.7，下面的命令就会用该版本创建名为<code>myenv</code>的环境：</li>
 </ol>
 <div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">python</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> -m</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> venv</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> myenv</span></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><p>如果你的系统上同时安装了多个版本的Python，你可以指定要使用的Python解释器的完径。例如：</p>
-<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">python</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> -m</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> venv</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --python=C:</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">\\</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">Python37</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">\\</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">python.exe</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> myenv</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><p>如果系统上同时安装了多个版本的Python，直接使用目标解释器的完整路径来运行venv。例如，在CMD中：</p>
+<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">C:\Python37\python.exe</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> -m</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> venv</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> myenv</span></span></code></pre>
 <div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><ol start="5">
-<li>激活虚拟环境。在命令提示符或者PowerShell中，使用以下命令激活虚拟环境：</li>
+<li>激活虚拟环境。命令提示符（CMD）和PowerShell使用的脚本不同。</li>
 </ol>
-<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">myenv\\Scripts\\activate</span></span></code></pre>
+<p>在CMD中：</p>
+<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">myenv\Scripts\activate.bat</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><p>在PowerShell中：</p>
+<div class="language-powershell line-numbers-mode" data-highlighter="shiki" data-ext="powershell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-powershell"><span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">.\myenv\Scripts\Activate.ps1</span></span></code></pre>
 <div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><p>激活后，你将看到命令提示符或者PowerShell的提示符前面有<code>(myenv)</code>字样，表示你进入了虚拟环境。</p>
-<p>现在，你已经成功创建了指定版本的虚拟环境，并且可以在该环境中安装和运行特定版本的Python程序。</p>
+<p>确认创建时使用的解释器版本后，就可以在该环境中安装依赖、运行Python程序。</p>
 <h2>参考链接</h2>
 <p><a href="https://docs.python.org/3/library/venv.html" target="_blank" rel="noopener noreferrer">https://docs.python.org/3/library/venv.html</a></p>
 ]]></content>
@@ -1029,12 +1033,13 @@
     <content type="html"><![CDATA[<p>本文摘录模运算中加法、减法和乘法的基本关系。</p>
 <!-- more -->
 <h2>余法运算公式</h2>
-<p>a mod b表示a除以b的余数。有下面的公式：</p>
+<p>a mod b 表示 a 对 b 取模。以下等式按数学模运算理解：a、b 为整数，模数 p 为正整数，% 的结果取 0 到 p−1 之间的非负余数。</p>
 <ul>
 <li>(a + b) % p = (a%p + b%p) %p</li>
 <li>(a - b) % p = ((a%p - b%p) + p) %p</li>
 <li>(a * b) % p = (a%p)*(b%p) %p</li>
 </ul>
+<p>如果直接用 C/C++ 的 % 求余，减法式的两边可能不同：例如 a=0、b=1、p=2 时，左边为 -1，右边为 1。实现数学取模时需要统一处理负余数，并避免中间的加、减、乘法溢出。C 语言求余规则可参见 <a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf" target="_blank" rel="noopener noreferrer">C11 公开草案 N1570</a> §6.5.5。</p>
 ]]></content>
     <category term="编程与软件工程"/>
     <published>2023-12-25T00:00:00.000Z</published>
@@ -1049,8 +1054,8 @@
     <content type="html"><![CDATA[<p>本文探讨C++中 s = s + 'A' 和 s += 'A' 的区别</p>
 <!-- more -->
 <h2>原理</h2>
-<p>在C++中，当你执行<code>s = s + 'A'</code>时，实际上是创建了一个新的字符串。这是因为C++中字符串的<code>+</code>运算符被重载以连接字符串，其结果是一个新的字符串。</p>
-<p>另一方面，当你执行<code>s += 'A'</code>时，这是一种原地操作，它通过将字符'A'附加到现有字符串<code>s</code>上来修改现有字符串。字符串的<code>+=</code>运算符被设计为修改现有字符串对象，而不是创建新的对象。</p>
+<p>这里假设变量 s 的类型是 <code>std::string</code>。在C++中，当你执行<code>s = s + 'A'</code>时，实际上是创建了一个新的字符串。这是因为C++中字符串的<code>+</code>运算符被重载以连接字符串，其结果是一个新的字符串。</p>
+<p>另一方面，当你执行<code>s += 'A'</code>时，这是一种原地操作，它通过将字符'A'附加到现有字符串<code>s</code>上来修改现有字符串。字符串的<code>+=</code>运算符被设计为修改现有字符串对象，而不是创建新的对象。这里的“原地”指修改同一个字符串对象；容量不足时，内部字符存储仍可能重新分配。</p>
 <p>从效率的角度来看，<code>s += 'A'</code>可能比<code>s = s + 'A'</code>更高效，因为它有可能避免创建新的字符串对象，直接修改现有对象。</p>
 <p>简而言之：</p>
 <ul>
@@ -1061,9 +1066,11 @@
 <p><code>s += 'A'</code>：通过将字符'A'附加到现有字符串<code>s</code>上来修改现有字符串。</p>
 </li>
 </ul>
-<p>一般来说，如果你不需要保留原始字符串，使用<code>+=</code>可能更高效，因为它修改现有对象。然而，如果你想保留原始字符串不变，应该使用<code>s = s + 'A'</code>。</p>
+<p>一般来说，只是向现有字符串追加字符时，使用<code>+=</code>可能更高效。不过，<code>s = s + 'A'</code>同样会修改原始字符串，不能用来保留它的原值。若要保留原始内容，应把拼接结果赋给另一个变量。</p>
 <h2>案例</h2>
-<p>参考链接：</p>
+<p>字符串字面量的拼接需要另作区分：<code>&quot;A&quot; &quot;B&quot;</code> 会在翻译阶段合成一个字符串字面量；<code>&quot;A&quot; + &quot;B&quot;</code> 不能编译，因为这里没有适用的加法运算。写成 <code>std::string(&quot;A&quot;) + &quot;B&quot;</code> 后，才会使用字符串的重载运算符完成拼接。</p>
+<p>参考链接：<br>
+<a href="https://wg21.link/n4659" target="_blank" rel="noopener noreferrer">C++17 公开草案 N4659</a>：[string.op+]、[string.op+=]、[lex.string]。</p>
 ]]></content>
     <category term="编程与软件工程"/>
     <published>2023-12-25T00:00:00.000Z</published>
@@ -1082,7 +1089,9 @@
 <span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">private:</span></span>
 <span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">    vector</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x3C;int></span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> nums</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">5</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">);</span></span>
 <span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">};</span></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>错误原因是：编译器无法区分该语句是成员变量声明还是成员函数声明。</p>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这里的问题是类内成员声明的初始化语法：从 C++11 起，非静态数据成员的默认成员初始化可以使用等号或花括号，不能直接使用圆括号。编译器会尝试把圆括号里的内容按函数参数声明解析，但数字 5 不是合法的参数声明，所以报错。</p>
+<p>若要初始化一个包含 5 个元素的 vector，可以在类内写 <code>vector&lt;int&gt; nums = vector&lt;int&gt;(5);</code>。不要直接改成 <code>vector&lt;int&gt; nums{5};</code>：后者会调用接受初始化列表的构造函数，得到一个只含元素 5 的 vector。</p>
+<p>语法和构造函数规则可参见 <a href="https://wg21.link/n4659" target="_blank" rel="noopener noreferrer">C++17 公开草案 N4659</a> 的 [class.mem]、[dcl.init.list] 和 [vector.cons]。</p>
 ]]></content>
     <category term="编程与软件工程"/>
     <published>2023-12-20T00:00:00.000Z</published>
@@ -1244,34 +1253,34 @@ AUTOSAR中国官方培训课程</p>
 <!-- more -->
 <h2>前提</h2>
 <p>首先理解声明和定义：</p>
-<p>声明是告诉编译器有一个这样的变量或函数存在，定义是为变量分配内存空间或者实现函数本体(body)</p>
+<p>声明向编译器说明标识符及其类型；定义也是声明，并为对象提供存储或给出函数体。</p>
 <div class="hint-container tip">
 <p class="hint-container-title">提示</p>
-<p>在c语言中声明和定义一个变量是同时进行的，但extern仅用于声明</p>
+<p>变量的声明和定义不一定同时发生。<code>extern int x;</code> 通常只是声明；在文件作用域，带初始化器的 <code>extern int x = 1;</code> 则是定义。文件作用域的 <code>int x;</code> 是暂定定义。</p>
 </div>
 <h2>extern作用</h2>
-<p>在C语言中，关键字<code>extern</code>用于声明一个变量或函数，以便告诉编译器它们的存在，但并不会分配实际的存储空间。具体来说，<code>extern</code>的作用有以下几点：</p>
+<p>在C语言中，<code>extern</code> 是存储类别说明符，参与确定标识符的链接属性。常见用法是不带初始化器地声明变量，供当前文件引用。具体来说，<code>extern</code>的作用有以下几点：</p>
 <ol>
 <li>
-<p><strong>变量声明</strong>：当<code>extern</code>用于变量声明时，它告诉编译器该变量在其他文件中已经定义，因此在当前文件中不需要为其分配存储空间。这样做可以避免重复定义变量，而只是声明它的存在。</p>
+<p><strong>变量声明</strong>：当<code>extern</code>用于不带初始化器的变量声明时，这个声明本身不为变量提供存储。变量的定义可以在同一个翻译单元，也可以在另一个翻译单元；声明并不表示定义已经出现。</p>
 <div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#66707B;--shiki-dark:#BDC4CC">// 在一个文件中声明变量</span></span>
 <span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">extern</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492"> int</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> x;</span></span></code></pre>
 <div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div></div></div></li>
 <li>
-<p><strong>函数声明</strong>：类似地，<code>extern</code>也可以用于函数声明，以便告诉编译器该函数在其他文件中已经定义。</p>
+<p><strong>函数声明</strong>：函数声明也可以显式使用<code>extern</code>，但通常可以省略。它不表示函数一定在其他文件中定义。</p>
 <div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#66707B;--shiki-dark:#BDC4CC">// 声明函数的存在</span></span>
 <span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">extern</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492"> void</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> someFunction</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">();</span></span></code></pre>
 <div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div></div></div></li>
 <li>
-<p><strong>全局变量</strong>：在全局范围内使用<code>extern</code>可以使变量在当前文件中具有全局作用域，但实际的定义在其他文件中。这在大型项目中很有用，因为它允许多个文件共享相同的全局变量。</p>
+<p><strong>全局变量</strong>：文件作用域的<code>extern</code>声明使标识符从声明处到文件末尾可见；块作用域的声明则只在相应块内可见。多个翻译单元通过外部链接引用同一对象，但每个使用它的文件仍需看到相应声明。</p>
 <div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#66707B;--shiki-dark:#BDC4CC">// 在一个文件中使用 extern 声明全局变量</span></span>
 <span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">extern</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492"> int</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> globalVariable;</span></span></code></pre>
 <div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div></div></div></li>
 </ol>
-<p>总之，<code>extern</code>关键字用于声明变量或函数的存在，但不会分配实际的存储空间。这使得程序可以跨多个文件共享变量和函数，同时避免了重复定义的问题。</p>
+<p>共享对象通常在一个源文件中定义，再把声明放进头文件供其他文件包含。<code>extern</code>并不总是建立外部链接：如果可见的先前声明已经指定内部链接，后续的 extern 声明会延续该链接。声明、定义、作用域和链接属性需要分别判断。</p>
 <h2>案例： 使用extern模拟面向对象编程</h2>
-<p>在C语言中，使用<code>extern</code>关键字可以实现一定程度的面向对象编程。下面是一个详细的例子，展示了如何使用<code>extern</code>来模拟类和对象的概念。</p>
-<p>首先，我们创建一个头文件<code>myclass.h</code>，其中定义了一个类<code>MyClass</code>和相关的方法和属性：</p>
+<p>下面用结构体保存数据和函数指针，模拟对象的组织方式；<code>extern</code>用于声明由另一个源文件定义的对象。对象式组织来自结构体与函数指针，<code>extern</code>本身不提供这些能力。</p>
+<p>首先，我们创建一个头文件<code>myclass.h</code>，其中定义了结构体类型<code>MyClass</code>，并声明共享对象及相关函数：</p>
 <div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#66707B;--shiki-dark:#BDC4CC">// myclass.h</span></span>
 <span class="line"></span>
 <span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">#ifndef</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> MYCLASS_H</span></span>
@@ -1302,7 +1311,7 @@ AUTOSAR中国官方培训课程</p>
 <span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">}</span></span>
 <span class="line"></span>
 <span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">void</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> MyClass_printData</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">() {</span></span>
-<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">    printf</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF">"Data: </span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">%d\\</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF">n"</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, myObject.data);</span></span>
+<span class="line"><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF">    printf</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF">"Data: </span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">%d\n</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF">"</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">, myObject.data);</span></span>
 <span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">}</span></span></code></pre>
 <div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>接下来，我们创建一个主文件<code>main.c</code>，在其中使用类和对象：</p>
 <div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#66707B;--shiki-dark:#BDC4CC">// main.c</span></span>
@@ -1319,11 +1328,12 @@ AUTOSAR中国官方培训课程</p>
 <span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">}</span></span></code></pre>
 <div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>运行结果</p>
 <figure><figcaption>运行结果图</figcaption></figure>
-<p>在这个例子中，我们使用<code>extern</code>关键字在<code>main.c</code>中引用了在<code>myclass.c</code>中定义的<code>myObject</code>对象。通过调用<code>MyClass_init()</code>方法初始化对象，并通过<code>myObject.printData()</code>调用对象的方法。</p>
-<p>编译这些文件并运行程序，你将看到输出结果为<code>Data: 2023</code>，表示成功使用<code>extern</code>实现了面向对象编程的模拟。</p>
-<p>需要注意的是，虽然使用<code>extern</code>可以模拟类和对象的概念，但C语言本身并不直接支持面向对象编程。这只是一种基于C语言的技巧或模式来实现一些面向对象的思想。</p>
+<p>在这个例子中，我们使用<code>extern</code>关键字在<code>main.c</code>中引用了在<code>myclass.c</code>中定义的<code>myObject</code>对象。通过调用<code>MyClass_init()</code>方法初始化对象，并通过<code>myObject.printData()</code>调用对象的方法。头文件已经声明了共享对象，因此 main.c 中重复的声明可以省略。</p>
+<p>编译这些文件并运行程序，你将看到输出结果为<code>Data: 2023</code>，并换行。这说明借助<code>extern</code>声明，两个源文件访问的是同一个共享对象。</p>
+<p>这是一种用 C 组织对象和方法的模式；<code>extern</code>只处理声明及链接关系，不提供封装、继承或动态分派。示例沿用了旧笔记的空参数列表写法：在 C17 及以前，头文件中不带函数体的这类声明不指定参数信息；明确无参数时，应在参数列表中写 void。</p>
 <p>参考链接：<br>
-<a href="https://www.geeksforgeeks.org/difference-between-definition-and-declaration/" target="_blank" rel="noopener noreferrer">Difference between Definition and Declaration - GeeksforGeeks</a></p>
+<a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf" target="_blank" rel="noopener noreferrer">C11 公开草案 N1570</a>：§6.2.1、§6.2.2、§6.7.6.3、§6.9.2。</p>
+<p><a href="https://www.geeksforgeeks.org/difference-between-definition-and-declaration/" target="_blank" rel="noopener noreferrer">Difference between Definition and Declaration - GeeksforGeeks</a></p>
 ]]></content>
     <category term="编程与软件工程"/>
     <published>2023-12-09T00:00:00.000Z</published>
@@ -1338,10 +1348,10 @@ AUTOSAR中国官方培训课程</p>
     <content type="html"><![CDATA[<p>本文主要介绍C语言中sizeof的原理分析</p>
 <!-- more -->
 <h2>原理</h2>
-<p><code>sizeof</code> 是 C 语言的一个运算符，用于返回一个对象或数据类型的大小，以字节为单位。<code>sizeof</code> 运算符在编译时计算，不会执行实际的运算。</p>
-<p>由于 <code>sizeof</code> 是编译时计算大小的，其实现是由编译器提供的，而不是由标准 C 库提供的函数。因此，<code>sizeof</code> 的实现通常依赖于编译器和目标体系结构。</p>
+<p><code>sizeof</code> 是 C 语言的一个运算符，用于取得对象类型的大小，以 C 字节为单位，结果类型是 size_t。<code>sizeof</code> 的操作数不是变长数组类型时，结果是整数常量，操作数不求值；变长数组类型的大小则可能需要在运行时计算。它不能用于函数类型、不完整类型或位域。</p>
+<p><code>sizeof</code> 的语义由编译器实现，不是标准 C 库函数。具体类型的大小取决于 C 实现及其目标平台。一个 C 字节不一定是 8 比特，字符类型的 <code>sizeof</code> 结果始终为 1。</p>
 <h2>实现方式</h2>
-<p>以下是 <code>sizeof</code> 运算符的一种可能的简化实现，假设一个字节等于 8 比特：</p>
+<p>下面保留旧笔记中的宏作为反例，它不是 <code>sizeof</code> 的合法、可移植实现。原示例还缺少声明 size_t 所需的标准头文件 stddef.h；即使补上头文件，也不能消除宏中的未定义行为。</p>
 <p>test.c文件</p>
 <div class="language-c line-numbers-mode" data-highlighter="shiki" data-ext="c" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-c"><span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">#define</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> SIZEOF</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">type</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">) ((</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">size_t</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">)(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">&#x26;</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">((type</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">*</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">)</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">0</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">)[</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF">1</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">]))</span></span>
 <span class="line"></span>
@@ -1350,21 +1360,22 @@ AUTOSAR中国官方培训课程</p>
 <span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">    size_t</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6"> size </span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">=</span><span style="--shiki-light:#622CBC;--shiki-dark:#DBB7FF"> SIZEOF</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">(</span><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">int</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">);</span></span>
 <span class="line"><span style="--shiki-light:#A0111F;--shiki-dark:#FF9492">    return</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> 0</span><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">;</span></span>
 <span class="line"><span style="--shiki-light:#0E1116;--shiki-dark:#F0F3F6">}</span></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这个宏的工作原理是，将一个空指针转换为类型 <code>type*</code>，然后取数组的第一个元素的地址。由于数组索引是从零开始的，<code>&amp;((type*)0)[1]</code> 计算出第一个元素之后的地址。然后，整个表达式被强制转换为 <code>size_t</code> 类型，以表示大小。</p>
-<p>需要注意的是，这只是一个简化的例子，实际的实现可能更为复杂，以处理各种类型和体系结构。实际的 <code>sizeof</code> 实现通常是由编译器内部提供的，因为它需要考虑各种编译器和目标平台的特定细节。</p>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这个宏试图从类型为 <code>type*</code> 的空指针出发，用 <code>&amp;((type*)0)[1]</code> 得到偏移后的指针，再将它转换为 <code>size_t</code>。但空指针不指向实际数组对象，不能据此合法地执行加 1；即使某个编译器生成了预期数值，也不能把该表达式当成类型大小的通用计算方法。</p>
+<p>真正的 <code>sizeof</code> 根据操作数的类型计算大小，不需要构造空指针。原宏还把指针转换成整数，这种转换的结果由实现定义；如果结果不能由目标整数类型表示，行为也是未定义的。</p>
 <h3>代码分析</h3>
 <p><code>(size_t)(&amp;((type*)0)[1])</code> 的运算顺序可以分解为以下步骤：</p>
 <ol>
 <li><code>(type*)0</code>: 将整数 0 转换为指向类型 <code>type</code> 的指针，得到一个指向类型 <code>type</code> 的空指针。</li>
-<li><code>((type*)0)[1]</code>: 使用上一步得到的空指针进行数组操作，取得数组的第二个元素。这等效于 <code>( ((type*)0) + 1)</code>。请注意，这里并没有实际的数组，只是利用了指针运算的语法。</li>
-<li><code>&amp;((type*)0)[1]</code>: 取得数组第二个元素的地址。</li>
-<li><code>(size_t)(&amp;((type*)0)[1])</code>: 将这个地址转换为 <code>size_t</code> 类型。</li>
+<li><code>((type*)0)[1]</code>: 用空指针形成下标表达式，但没有实际数组。下标表达式本身不能与 <code>( ((type*)0) + 1)</code> 这个指针表达式等同。</li>
+<li><code>&amp;((type*)0)[1]</code>: 取地址和下标所隐含的解引用相抵消，剩余空指针加 1。这里虽然没有读取数组元素，但指针加法仍然没有合法的对象基础，行为未定义。</li>
+<li><code>(size_t)(&amp;((type*)0)[1])</code>: 将所得指针转换为 <code>size_t</code> 类型。这个转换也不保证得到以字节计的大小。</li>
 </ol>
-<p>整个表达式的目的是计算一个指向类型 <code>type</code> 的指针，指向一个虚构的数组的第二个元素，然后获取这个元素的地址，并将其转换为 <code>size_t</code> 类型。这种技巧通常用于计算结构体或数组的大小，而无需创建实际的实例。</p>
-<p>通过将test.c文件编译成汇编文件可发现：</p>
+<p>因此，不能通过“虚构数组”来替代对象边界规则。要取得类型 <code>type</code> 的大小，应使用 sizeof(type)，而不是把空指针运算的结果转换为 <code>size_t</code>。</p>
+<p>旧笔记记录了以下汇编结果。它们只能说明当时某次编译的输出，不能证明上述宏符合 C 标准；原记录未给出完整的编译器版本、目标平台和编译选项：</p>
 <p><code>SIZEOF(int)</code> 对应汇编文件中的 <code>movq $4, -8(%rbp)</code>，将值 4 存储在相对于 <strong><code>%rbp</code></strong> 偏移为 -8 的位置。</p>
 <p><code>SIZEOF(double)</code> 对应汇编文件中的<code>movq $8, -8(%rbp)</code>，将值 8 存储在相对于 <strong><code>%rbp</code></strong> 偏移为 -8 的位置。</p>
-<p>可见将整数 0 转换为指向类型 <code>type</code> 的指针，得到一个指向类型 <code>type</code> 的空指针时<code>type[0]</code>的地址为0，<code>((type*)0)[1]</code>的偏移量即为type的字节大小，从而可获取type的字节大小</p>
+<p>这些结果不能说明空指针具有可供访问的“地址为 0 的对象”。把 0 转换为指向类型 <code>type</code> 的指针，得到的空指针仍不指向实际的 <code>type</code> 对象，不能把 <code>type[0]</code> 解释为合法的数组元素；<code>((type*)0)[1]</code> 所依赖的空指针算术仍然未定义。实际代码应直接使用 sizeof。</p>
+<p>依据：<a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf" target="_blank" rel="noopener noreferrer">C11 公开草案 N1570</a> §6.3.2.3p6、§6.5.3.2p3、§6.5.3.4、§6.5.6p8。</p>
 ]]></content>
     <category term="编程与软件工程"/>
     <published>2023-12-09T00:00:00.000Z</published>
@@ -1374,39 +1385,41 @@ AUTOSAR中国官方培训课程</p>
     <id>https://binkyle.github.io/blog/github/githubNote.html</id>
     <link href="https://binkyle.github.io/blog/github/githubNote.html"/>
     <updated>2023-11-28T00:00:00.000Z</updated>
-    <summary type="html"><![CDATA[<p>本文主要介绍github system、global、local三个级别的代理配置及优先级</p>
+    <summary type="html"><![CDATA[<p>这里记录 Git 在 system、global、local 三个级别的代理配置及优先级。</p>
 ]]></summary>
-    <content type="html"><![CDATA[<p>本文主要介绍github system、global、local三个级别的代理配置及优先级</p>
+    <content type="html"><![CDATA[<p>这里记录 Git 在 system、global、local 三个级别的代理配置及优先级。</p>
 <!-- more -->
 <h2>指令介绍</h2>
 <h3>设置代理</h3>
-<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> config</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --global</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> http.proxy</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> http://127.0.0.1:[Port]</span></span>
-<span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> config</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --global</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> https.proxy</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> https://127.0.0.1:1080:[Port]</span></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div></div></div><h3>取消代理</h3>
+<p>Git 的 HTTP/HTTPS 传输都使用 http.proxy 配置代理，下面以本地 HTTP 代理为例：</p>
+<div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> config</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --global</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> http.proxy</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> http://127.0.0.1:[Port]</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><h3>取消代理</h3>
+<p>下面的 https.proxy 查询和取消命令仅用于检查、清理旧笔记中误设的配置项；设置 Git 代理时使用的是 http.proxy。</p>
 <div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> config</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --global</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --unset</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> http.proxy</span></span>
 <span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> config</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --global</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --unset</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> https.proxy</span></span></code></pre>
 <div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div></div></div><div class="hint-container tip">
 <p class="hint-container-title">提示</p>
-<p>[Port]替换为你本地代理的端口<br>
+<p>[Port]替换为你本地代理客户端的实际端口，代理地址的协议也以客户端配置为准<br>
 --global 可替换为--system、--local</p>
 </div>
 <h2>生效优先级</h2>
-<p>system级指的是程序级别的配置，配置文件在程序的配置目录中<br>
+<p>system级是系统级配置，配置文件位于 Git 安装前缀下的 etc/gitconfig<br>
 global级是用户级别的配置，配置文件在用户目录中<br>
 local级是仓库级别的配置，配置文件在仓库下的.git目录中</p>
 <div class="hint-container tip">
 <p class="hint-container-title">提示</p>
-<p>优先级：local &gt; global &gt; system</p>
+<p>在这里列出的三个级别中，优先级：local &gt; global &gt; system</p>
 </div>
 <h2>案例</h2>
-<p>在一个git脚本中当执行取消代理指令</p>
+<p>在一个git脚本中执行取消代理指令：</p>
 <figure><figcaption>Alt text</figcaption></figure>
-<p>遇到报错</p>
+<p>执行后遇到报错：</p>
 <figure><figcaption>Alt text</figcaption></figure>
-<p>通过执行代理查看指令</p>
+<p>执行下面的指令查看global级别的代理配置：</p>
 <div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> config</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --global</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --get</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> http.proxy</span></span>
 <span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> config</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --global</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --get</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> https.proxy</span></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div></div></div><p>发现global级别配置了代理地址，取消global级别的代理配置后，问题解决</p>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div></div></div><p>发现global级别配置了代理地址，取消global级别的代理配置后，问题解决。</p>
+<p>参考：<a href="https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpproxy" target="_blank" rel="noopener noreferrer">Git 官方配置文档</a></p>
 ]]></content>
     <category term="编程与软件工程"/>
     <published>2023-11-28T00:00:00.000Z</published>
@@ -1422,8 +1435,10 @@ local级是仓库级别的配置，配置文件在仓库下的.git目录中</p>
 <!-- more -->
 <h2>项目构建</h2>
 <p>参考链接 <a href="https://theme-hope.vuejs.press/zh/cookbook/tutorial/" target="_blank" rel="noopener noreferrer">小白教程</a></p>
+<p>旧教程链接若无法打开，可从主题目前的<a href="https://theme-hope.vuejs.press/zh/get-started/" target="_blank" rel="noopener noreferrer">快速上手</a>进入文档。</p>
 <h2>部署到gitpages</h2>
-<p>若参考上面项目构建链接，此时本地git仓库已初始化</p>
+<p>这里保留当时推送博客源码的 Git 操作；站点构建和 GitHub Pages 发布仍需另行配置，具体方式以项目使用的 VuePress 和主题版本为准。</p>
+<p>下面的步骤以本地git仓库已初始化为前提。</p>
 <p>1.创建本地分支</p>
 <p>查看本地分支</p>
 <div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> branch</span></span></code></pre>
