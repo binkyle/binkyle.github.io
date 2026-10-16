@@ -3,7 +3,7 @@
   <id>https://binkyle.github.io/</id>
   <title>孤星旅记</title>
   <subtitle>Bin 的工程探索与个人记录。沿着 AUTOSAR、车载网络与底层系统的脉络，在复杂系统中寻找秩序。</subtitle>
-  <updated>2026-10-16T17:22:11.163Z</updated>
+  <updated>2026-10-16T17:41:40.258Z</updated>
   <generator>@vuepress/plugin-feed</generator>
   <link rel="self" href="https://binkyle.github.io/atom.xml"/>
   <link rel="alternate" href="https://binkyle.github.io/"/>
@@ -869,10 +869,10 @@
 通过图形视图或文本网格视图，可以设计软件组件类型、端口、数据、连接器和内部行为。<br>
 </p>
 <h2>2.工作空间(workspace)</h2>
-<figure><figcaption>Alt text</figcaption></figure>
-<figure><figcaption>Alt text</figcaption></figure>
+<figure><figcaption>DaVinci Developer Classic 读写 DCF 文件</figcaption></figure>
+<figure><figcaption>DCF 由 Developer Classic 读写、由 Configurator Classic 只读</figcaption></figure>
 <h2>3. SWC 设计</h2>
-<figure><figcaption>Alt text</figcaption></figure>
+<figure><figcaption>DaVinci Developer 中的 SWC、Runnable、端口连接与 Data Mapping 示意</figcaption></figure>
 <ol>
 <li>应用组件(Application Components)</li>
 <li>端口、端口初始值和数据元素(Ports, Port Init Values and Data Elements)</li>
@@ -888,7 +888,7 @@
 <ol>
 <li>在 Type-oriented 视图中右键，创建新的 Application Component Type。</li>
 </ol>
-<figure><figcaption>Alt text</figcaption></figure>
+<figure><figcaption>在 Object Browser 中新建 Application Component Type 的右键菜单</figcaption></figure>
 <h3>2. 理解类型、原型和接口(Types, Prototypes and Interfaces)</h3>
 <p>软件组件类型定义组件的结构与行为；在组合中使用该类型时，会创建引用它的 Component Prototype。Port Prototype 则是组件类型上的端口，通过引用 Port Interface 描述通信内容，端口本身并不是接口。</p>
 <ul>
@@ -896,7 +896,7 @@
 <li>Component Prototype in a Composition -&gt; references a Component Type</li>
 </ul>
 <p>上述关系见 <a href="https://www.autosar.org/fileadmin/standards/R24-11/CP/AUTOSAR_CP_TPS_SoftwareComponentTemplate.pdf" target="_blank" rel="noopener noreferrer">AUTOSAR Software Component Template（R24-11）</a> 中的 PortPrototype、PortInterface 与 SwComponentPrototype 定义。</p>
-<figure><figcaption>Alt text</figcaption></figure>
+<figure><figcaption>SWC Type、Prototype、Port Interface 与生成的 SWC 模板之间的关系</figcaption></figure>
 <h3>3. 端口、端口初始值和 数据元素(元数据的一个原子数据单元)</h3>
 <p>在使用应用程序端口之前，必须定义应用程序端口接口。要完全定义端口接口，如果不想使用预定义的数据类型，则必须首先定义数据类型。<br>
 端口有以下几个类别</p>
@@ -915,7 +915,7 @@
 <h3>7. 生成模板</h3>
 <p>如果计划手动实现SWC(而不是使用基于模型的代码生成器)，可以生成SWC模板和合约头文件。<br>
 要生成代码，在对象浏览器中选择 SWC，再通过右键菜单调用代码生成器。</p>
-<figure><figcaption>Alt text</figcaption></figure>
+<figure><figcaption>Generation 菜单中的 Contract Phase Headers 与 Implementation Templates 入口</figcaption></figure>
 ]]></content>
     <category term="嵌入式系统与 AUTOSAR"/>
     <published>2024-01-15T00:00:00.000Z</published>
@@ -1412,9 +1412,10 @@ local级是仓库级别的配置，配置文件在仓库下的.git目录中</p>
 </div>
 <h2>案例</h2>
 <p>在一个git脚本中执行取消代理指令：</p>
-<figure><figcaption>Alt text</figcaption></figure>
+<figure><figcaption>Git 脚本中的 local 级别代理清理与证书校验设置</figcaption></figure>
+<p>截图还包含 <code>http.sslVerify false</code>，这会关闭 HTTPS 证书校验。排查代理连通性时应保留证书校验；该配置的含义见 <a href="https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpsslVerify" target="_blank" rel="noopener noreferrer">Git 官方说明</a>。</p>
 <p>执行后遇到报错：</p>
-<figure><figcaption>Alt text</figcaption></figure>
+<figure><figcaption>Git 无法连接本机代理地址的终端报错</figcaption></figure>
 <p>执行下面的指令查看global级别的代理配置：</p>
 <div class="language-shell line-numbers-mode" data-highlighter="shiki" data-ext="shell" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-shell"><span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> config</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --global</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --get</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> http.proxy</span></span>
 <span class="line"><span style="--shiki-light:#702C00;--shiki-dark:#FFB757">git</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> config</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --global</span><span style="--shiki-light:#023B95;--shiki-dark:#91CBFF"> --get</span><span style="--shiki-light:#032563;--shiki-dark:#ADDCFF"> https.proxy</span></span></code></pre>
