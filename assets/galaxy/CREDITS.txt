@@ -1,0 +1,18 @@
+Hubble Image of M101 / Pinwheel Galaxy
+
+Source: https://science.nasa.gov/asset/hubble/hubble-image-of-m101/
+Original: https://assets.science.nasa.gov/content/dam/science/missions/hubble/releases/2009/02/STScI-01EVT5S0014XSYMBAATA2CC769.tif/jcr:content/renditions/1280x1280.jpg
+
+Credit: NASA, ESA, K. Kuntz (JHU), F. Bresolin (University of Hawaii),
+J. Trauger (Jet Propulsion Lab), J. Mould (NOAO),
+Y.-H. Chu (University of Illinois, Urbana), and STScI.
+
+Local derivatives: m101.webp and m101-small.webp, resized and lightly
+color adjusted for an illustrative, non-scientific interactive backdrop.
+The knowledge constellations are a design metaphor, not astronomical objects.
+This website is not endorsed by NASA, ESA, or STScI.
+NASA media guidance: https://www.nasa.gov/nasa-brand-center/images-and-media/
+
+Display font: Noto Serif SC, Google Fonts subset, SIL Open Font License 1.1.
+Font license: ../fonts/OFL.txt
+Bundled library licenses: THIRD-PARTY.txt
