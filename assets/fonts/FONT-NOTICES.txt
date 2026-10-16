@@ -1,0 +1,34 @@
+BINKYLE SELF-HOSTED FONT NOTICES
+
+These are modified subsets, renamed Binkyle Serif and Binkyle Sans.
+The font software remains licensed under SIL Open Font License 1.1.
+The names do not imply endorsement by Google, Adobe, or the Noto project.
+Original copyright and license notices are retained below and in each font's name table.
+Complete unmodified upstream OFL texts accompany these files.
+
+Binkyle Serif
+Derived from Noto Serif SC (Version 2.003-H1;hotconv 1.1.1;makeotfexe 2.6.0).
+(c) 2017-2024 Adobe (http://www.adobe.com/).
+Upstream OFL header: Copyright 2012 Google Inc. All Rights Reserved.
+Full license: OFL-NotoSerifSC.txt
+Source: https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notoserifsc/NotoSerifSC%5Bwght%5D.ttf
+Source SHA-256: 050080d9255a86808f2945bffac582b31ef32bc36411ce29563b4961670c66f9
+
+Binkyle Sans
+Derived from Noto Sans SC (Version 2.004-H2;hotconv 1.0.118;makeotfexe 2.5.65603).
+(c) 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.
+Upstream OFL header: Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'
+Full license: OFL-NotoSansSC.txt
+Source: https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf
+Source SHA-256: a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da
+
+HISTORICAL COMPATIBILITY ASSET: brand-serif.ttf
+Retained byte-for-byte for already cached stylesheet URLs; not used by the new font faces.
+Embedded family: Noto Serif SC Medium
+Embedded version: Version 2.003-H1;hotconv 1.1.1;makeotfexe 2.6.0
+(c) 2017-2024 Adobe (http://www.adobe.com/).
+License: SIL Open Font License 1.1; complete existing text in OFL.txt.
+The matching upstream version's complete original OFL, including its copyright header,
+is also preserved in OFL-NotoSerifSC.txt. This notice supplies the attribution omitted
+from the historical standalone OFL.txt. No authorship claim is made for the subset.
+SHA-256: 3393fbcb59d1308f087140f82708d3f557738940a414b82815d1f961b5f275c0
