@@ -3,7 +3,7 @@
   <id>https://binkyle.github.io/</id>
   <title>孤星旅记</title>
   <subtitle>Bin 的工程探索与个人记录。沿着 AUTOSAR、车载网络与底层系统的脉络，在复杂系统中寻找秩序。</subtitle>
-  <updated>2026-10-17T00:50:33.993Z</updated>
+  <updated>2026-10-19T17:09:34.378Z</updated>
   <generator>@vuepress/plugin-feed</generator>
   <link rel="self" href="https://binkyle.github.io/atom.xml"/>
   <link rel="alternate" href="https://binkyle.github.io/"/>
@@ -11,6 +11,56 @@
   <category term="车载通信与网络"/>
   <category term="编程与软件工程"/>
   <category term="阅读与思考"/>
+  <entry>
+    <title type="text">多核同步机制：Spinlock、Barrier 与原子操作的设计边界</title>
+    <id>https://binkyle.github.io/blog/Autosar/autosar_multicore_spinlock_barrier.html</id>
+    <link href="https://binkyle.github.io/blog/Autosar/autosar_multicore_spinlock_barrier.html"/>
+    <updated>2026-10-19T00:00:00.000Z</updated>
+    <summary type="html"><![CDATA[<p>两个核要修改同一份共享数据，需要防止访问相互干扰；几个核必须各自完成初始化后才能继续，则要确认参与者是否都已到达。这两个场景都可能出现等待，解决的却不是同一个问题。</p>
+<p>前者主要是<strong>互斥（mutual exclusion）</strong>，后者是<strong>会合（rendezvous）</strong>。如果遇到等待就想到加 Spinlock，容易把初始化同步写成持锁忙等，甚至让系统卡在彼此等待的状态。</p>
+<p>本文讨论一般多核实时系统的设计方法。AUTOSAR Classic OS 规范定义了 Spinlock 等 OS 服务；<strong>Barrier 是这里讨论的通用并发设计概念，不能把供应商专用的 Barrier 服务视为所有 AUTOSAR OS 都具有的标准 API。</strong> 文中的流程图和状态案例为原创通用示意，不代表特定商业内核的代码或算法。</p>
+]]></summary>
+    <content type="html"><![CDATA[<p>两个核要修改同一份共享数据，需要防止访问相互干扰；几个核必须各自完成初始化后才能继续，则要确认参与者是否都已到达。这两个场景都可能出现等待，解决的却不是同一个问题。</p>
+<p>前者主要是<strong>互斥（mutual exclusion）</strong>，后者是<strong>会合（rendezvous）</strong>。如果遇到等待就想到加 Spinlock，容易把初始化同步写成持锁忙等，甚至让系统卡在彼此等待的状态。</p>
+<p>本文讨论一般多核实时系统的设计方法。AUTOSAR Classic OS 规范定义了 Spinlock 等 OS 服务；<strong>Barrier 是这里讨论的通用并发设计概念，不能把供应商专用的 Barrier 服务视为所有 AUTOSAR OS 都具有的标准 API。</strong> 文中的流程图和状态案例为原创通用示意，不代表特定商业内核的代码或算法。</p>
+<!-- more -->
+<h2>1. 先确定要满足的正确性条件</h2>
+<p>先看设计到底要满足哪种条件：</p>
+<ul>
+<li><strong>互斥条件</strong>：任何时刻，是否最多只允许一个执行者修改受保护对象？</li>
+<li><strong>会合条件</strong>：只有指定的全部执行者都完成上一阶段，是否才能进入下一阶段？</li>
+</ul>
+<p>假设两个核分别写共享缓冲区。保护目标是不能在第一个核复制数据到一半时，让第二个核同时覆盖或读取一个不一致的快照。这适合研究临界区与锁。</p>
+<p>另一个场景中，几个核各自初始化自己的数据结构，随后需要同时开始处理依赖全局状态的任务。即使各自初始化的对象互不相同，也仍然可能需要同步点。这时只用互斥锁并不能表达“大家到齐”。</p>
+<p>| 概念 | 保护目标 | 常见行为 | 主要风险 |<br>
+|</p>
+]]></content>
+    <category term="嵌入式系统与 AUTOSAR"/>
+    <published>2026-10-19T00:00:00.000Z</published>
+  </entry>
+  <entry>
+    <title type="text">AUTOSAR OS Application：对象归属、访问控制与内存保护</title>
+    <id>https://binkyle.github.io/blog/Autosar/autosar_os_application_protection.html</id>
+    <link href="https://binkyle.github.io/blog/Autosar/autosar_os_application_protection.html"/>
+    <updated>2026-10-19T00:00:00.000Z</updated>
+    <summary type="html"><![CDATA[<p>在多核 ECU 的架构图里，Core 和 OS Application 经常画在一起，但它们不是同一种边界。一个 Core 可以运行不同 OS Application 的任务；配置了多个 OS Application，也不等于拥有桌面操作系统进程那样独立的虚拟地址空间。</p>
+<p>分析这类配置，要先分清三个问题：<strong>执行实体属于谁，OS 允许它使用哪些服务，硬件是否限制它访问某块内存。</strong> OS Application 把这些问题联系起来，却不能替代其中任何一层保护。</p>
+<p>本文以 <a href="https://www.autosar.org/fileadmin/standards/R24-11/CP/AUTOSAR_CP_SWS_OS.pdf" target="_blank" rel="noopener noreferrer">AUTOSAR Classic Platform R24-11 的 OS 规范</a> 为主要依据，讨论标准概念与通用设计检查方法。示意场景不代表任何真实 ECU 配置，也不涉及商业 OS 的内部代码。</p>
+]]></summary>
+    <content type="html"><![CDATA[<p>在多核 ECU 的架构图里，Core 和 OS Application 经常画在一起，但它们不是同一种边界。一个 Core 可以运行不同 OS Application 的任务；配置了多个 OS Application，也不等于拥有桌面操作系统进程那样独立的虚拟地址空间。</p>
+<p>分析这类配置，要先分清三个问题：<strong>执行实体属于谁，OS 允许它使用哪些服务，硬件是否限制它访问某块内存。</strong> OS Application 把这些问题联系起来，却不能替代其中任何一层保护。</p>
+<p>本文以 <a href="https://www.autosar.org/fileadmin/standards/R24-11/CP/AUTOSAR_CP_SWS_OS.pdf" target="_blank" rel="noopener noreferrer">AUTOSAR Classic Platform R24-11 的 OS 规范</a> 为主要依据，讨论标准概念与通用设计检查方法。示意场景不代表任何真实 ECU 配置，也不涉及商业 OS 的内部代码。</p>
+<!-- more -->
+<h2>1. 先分清 Core、Task 与 OS Application</h2>
+<p>在单核实时系统里，我们最熟悉的是 Task：操作系统决定哪个任务处于 Ready、Running 或 Waiting 状态，并依据配置和调度规则选择执行者。</p>
+<p>在多核系统中，每个 Core 各自推进执行，OS 仍要管理任务、定时器、中断，以及跨核服务的使用。</p>
+<p><strong>OS Application 是 OS 对象的组织与保护边界，而不是一个新的 CPU Core。</strong> 按 AUTOSAR OS 术语，它组织由该 Application 拥有的 OS 对象，如 Task、Category 2 ISR、Alarm、Counter、Resource 等。具体对象类型、所有权及可访问性以所采用规范版本和配置约束为准。</p>
+<p>| 概念 | 主要回答的问题 | 不能据此直接推出 |<br>
+|</p>
+]]></content>
+    <category term="嵌入式系统与 AUTOSAR"/>
+    <published>2026-10-19T00:00:00.000Z</published>
+  </entry>
   <entry>
     <title type="text">跨核不是缓存问题：从 AUTOSAR COM Deferred EventCache 看事件与状态一致性</title>
     <id>https://binkyle.github.io/blog/Autosar/autosar_com_cross_core_deferred_eventcache_consistency.html</id>
@@ -449,10 +499,18 @@
     <id>https://binkyle.github.io/blog/investment/%E7%82%92%E8%82%A1%E7%9A%84%E6%99%BA%E6%85%A7.html</id>
     <link href="https://binkyle.github.io/blog/investment/%E7%82%92%E8%82%A1%E7%9A%84%E6%99%BA%E6%85%A7.html"/>
     <updated>2024-07-01T00:00:00.000Z</updated>
-    <summary type="html"><![CDATA[<p>《炒股的智慧》读书笔记</p>
+    <summary type="html"><![CDATA[<p>这份笔记沿着交易规则、市场走势和心理建设三条线索，整理《炒股的智慧》中的观点。</p>
 ]]></summary>
-    <content type="html"><![CDATA[<p>《炒股的智慧》读书笔记</p>
+    <content type="html"><![CDATA[<p>这份笔记沿着交易规则、市场走势和心理建设三条线索，整理《炒股的智慧》中的观点。</p>
 <!-- more -->
+<h2>阅读说明</h2>
+<p>本文是围绕陈江挺《炒股的智慧》所做的历史阅读摘录与整理，不是一篇独立的交易方法研究。原稿中有大量第一人称表述、节选句和不完整的上下文；这些“我”不应被理解为本站作者的真实交易经历。所依据的具体版次、页码及逐段引用范围还需核对，因此暂不把摘录视为已完成来源审计的正式引文。</p>
+<p>书中提到的止损比例、移动平均线以及进出场习惯，属于相关文本的历史观点和经验表达。它们并非经过本站回测验证的通用规则，也不能直接当作当前投资操作建议。</p>
+<h2>从摘录中看到的三条主线</h2>
+<p>首先是<strong>风险边界</strong>。入场理由可以不断修正，但单笔交易可能承受的损失，最好在下单前想清楚。这比事后寻找持仓理由更能约束行为。</p>
+<p>其次是<strong>观察市场，而不是依赖单一信号</strong>。趋势、成交量、支撑与阻力都只是帮助理解行情的工具。判断出错时是否愿意调整，比依靠某个指标宣称行情必然向上或向下更重要。</p>
+<p>最后是<strong>执行与心理</strong>。笔记反复出现耐心、自律和克制报复性交易的提醒。它们并不保证盈利，却指出一个现实问题：知道规则和在压力下执行规则，是两回事。</p>
+<p>以下保留历史摘录，后续需要按书籍版本逐条核对，并将引用、概括和个人思考明确分开。</p>
 <h2>引言</h2>
 <ul>
 <li>
@@ -788,10 +846,13 @@
     <id>https://binkyle.github.io/blog/design%20mode/%E6%B7%B1%E5%85%A5%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F_%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0.html</id>
     <link href="https://binkyle.github.io/blog/design%20mode/%E6%B7%B1%E5%85%A5%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F_%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0.html"/>
     <updated>2024-06-16T00:00:00.000Z</updated>
-    <summary type="html"><![CDATA[<p>本文主要总结设计模式这本书，并用c语言简单举例</p>
+    <summary type="html"><![CDATA[<p>这份笔记围绕《深入设计模式》梳理设计原则和常见模式，也尝试用 C 语言示例理解其中的职责与协作关系。</p>
 ]]></summary>
-    <content type="html"><![CDATA[<p>本文主要总结设计模式这本书，并用c语言简单举例</p>
+    <content type="html"><![CDATA[<p>这份笔记围绕《深入设计模式》梳理设计原则和常见模式，也尝试用 C 语言示例理解其中的职责与协作关系。</p>
 <!-- more -->
+<h2>阅读说明</h2>
+<p>这是一份持续整理的学习笔记，不是《深入设计模式》的替代版本。原稿混合了概念摘录、个人解释和多种语言的示例，一些内容与 <a href="https://refactoringguru.cn/design-patterns" target="_blank" rel="noopener noreferrer">Refactoring.Guru 的设计模式资料</a>有关，目前还没有逐段核实原始出处、引用位置和图片使用依据。涉及原书的内容应以相应版本为准，不能因为文字经过润色就视为原创。</p>
+<p>阅读时不妨先看设计原则，再按创建型、结构型和行为型模式寻找自己遇到的问题。理解一种模式，比记住它的名字更重要的是分清：谁负责创建对象，谁承担变化，哪些依赖需要隔离。文中 C 语言示例主要用于理解结构体、函数指针与对象职责之间的关系；历史示例尚未统一进行编译、边界条件和工程适用性验证，不宜直接移入项目。</p>
 <h2><strong>一、前提</strong></h2>
 <h3>1.本书背景及重要性</h3>
 <p>这本书由亚历山大·什韦茨（Alexander Shvets）撰写，深入探讨了23种经典的设计模式。它不仅介绍了设计模式的定义、分类和应用场景，还通过具体的代码示例和UML图，帮助读者更好地理解和应用这些模式。</p>
@@ -1101,28 +1162,28 @@
     <id>https://binkyle.github.io/blog/Autosar/autosar_can_protocol.html</id>
     <link href="https://binkyle.github.io/blog/Autosar/autosar_can_protocol.html"/>
     <updated>2023-12-18T00:00:00.000Z</updated>
-    <summary type="html"><![CDATA[<p>本文主要讲解Autosar CAN 协议栈原理、集成及相关调试策略</p>
+    <summary type="html"><![CDATA[<p>这篇笔记先说明 CAN 总线通信的基本机制，再梳理 AUTOSAR 中 CAN Driver、CAN Interface 和 CAN Transceiver Driver 的分工。集成与调试部分仍是提纲，尚未整理成可复现的配置步骤。</p>
 ]]></summary>
-    <content type="html"><![CDATA[<p>本文主要讲解Autosar CAN 协议栈原理、集成及相关调试策略</p>
+    <content type="html"><![CDATA[<p>这篇笔记先说明 CAN 总线通信的基本机制，再梳理 AUTOSAR 中 CAN Driver、CAN Interface 和 CAN Transceiver Driver 的分工。集成与调试部分仍是提纲，尚未整理成可复现的配置步骤。</p>
 <!-- more -->
 <h2>CAN通信基本原理</h2>
 <h3>CAN通信概述</h3>
-<p>CAN（Controller Area Network）即控制器局域网络。由于其高性能、高可靠性、及独 特的设计，CAN越来越受到人们的重视。国外已有许多大公司的产品采用了这一技术。</p>
-<p>CAN最初是由德国的BOSCH公司为汽车监测、控制系统而设计的。现代汽车越来越多地采用电子装置控制，如发动机的定时、注油控制，加速、刹车控制（ASC）及复杂的抗锁定刹车系统（ABS）等。由于这些控制需检测及交换大量数据，采用硬接信号线的方式不但烦琐、昂贵，而且难以解决问题，采用CAN总线上述问题便得到很好地解决。</p>
+<p>CAN（Controller Area Network）即控制器局域网络，用于节点之间的数据通信。</p>
+<p>CAN 最初由德国 BOSCH 公司面向汽车监测与控制系统设计。发动机控制、制动控制等电子系统需要交换大量数据；采用共享总线可以减少控制器之间逐点布线的需求。</p>
 <h3>CAN标准及原理图</h3>
-<p>CAN总线是一种用于在不同的ECU（电子控制单元）之间传输数据的线，CAN总线协议是一种ISO 国际标准化的串行通信协议，有 ISO-11898 和 ISO-11519两个系列。其定义有：<br>
-ISO-11898 定义了通信速率为 125 kbps ~1Mbps 的高速 CAN 通信标准，属于闭环总线，传输速率可达1Mbps，总线长度 ≤ 40米，如下图。</p>
-<p>ISO11519 定义了通信速率为 10～125 kbps 的低速 CAN 通信标准，属于开环总线，传输速率为40kbps时，总线长度可达1000米，如下图。<br>
+<p>CAN 是用于 ECU（电子控制单元）等节点之间通信的串行总线。ISO 11898-1 描述数据链路层，ISO 11898-2 描述高速 CAN 物理层；低速容错 CAN 的物理层则见 ISO 11898-3。</p>
+<p>以下速率讨论限定为 Classical CAN。其最高位速率为 1 Mbps；高速 CAN 通常采用两端终端匹配的线形拓扑，不能把终端匹配理解为闭环连接。1 Mbps 下约 40 米是理论参考，实际可达长度还受线缆、收发器延迟及采样点等因素约束。</p>
+<p>低速容错 CAN 的位速率最高为 125 kbps。速率与长度不能脱离物理层和网络配置给出统一上限，下图中的具体数值也需结合这些条件理解。<br>
 </p>
 <h3>CAN特性</h3>
 <ul>
-<li>传输速率最高可达1Mbps，距离最远可达10km</li>
+<li>Classical CAN 的最高位速率为 1 Mbps；可达距离取决于位速率与物理层条件</li>
 <li>通信介质选择灵活（双绞线、同轴电缆、光纤）</li>
 <li>采用双线差分信号</li>
-<li>协议本身对节点的数量没有限制</li>
+<li>实际节点数量受收发器负载、总线电容及网络设计约束</li>
 <li>总线上节点的数量可以动态改变，组网灵活</li>
 <li>短帧结构，传输时间短，受干扰概率低</li>
-<li>多主站结构，各节点平等，任一节点可在任一时刻主动发送</li>
+<li>多主站结构，各节点均可发起发送请求；总线空闲时按协议开始发送，同时发送时参与仲裁</li>
 <li>非破坏性的基于优先级的总线仲裁</li>
 <li>优先级通过报文的标识符（ID）区分，报文标识符在网络中是唯一的
 <ol>
@@ -1139,50 +1200,61 @@ ISO-11898 定义了通信速率为 125 kbps ~1Mbps 的高速 CAN 通信标准，
 <p>CAN总线上，信号表现为电压形式，通过CAN_H和CAN_L线上的电位差来表示CAN信号，分为显性电平(dominant)和隐性电平(recessive)两种类型。其中显性电平规定为逻辑0，隐性电平则为逻辑1。其具体定义可通过下图来理解。<br>
 </p>
 <h3>CAN系统构成</h3>
-<p>有两种，如下图；第三种是CAN收发器也集成到微控制器中<br>
+<p>下图保留了早期资料中的节点构成示意。CAN 控制器与收发器可以采用不同的器件组合；是否集成到同一芯片、外部是否有独立收发器，都要以具体硬件方案为准。<br>
 </p>
 <h2>AUTOSAR CAN协议栈概述</h2>
 <ul>
-<li>Driver：主要包括CAN的Driver，以及根据外部的CAN的收</li>
+<li>Driver：主要包括访问 CAN 控制器硬件的 CAN Driver</li>
 </ul>
 <ul>
-<li>HaedwareAbs：包括用于区分CAN通信的接口，接收／发送不同功能的PDU以及控制CAN收发器进行工作的Transceiver</li>
+<li>HardwareAbs：包括 CAN Interface 和 CAN Transceiver Driver，分别提供 CAN 通信接口和收发器硬件抽象</li>
 </ul>
 <ul>
-<li>Services：包换CAN的状态管理以及PDU和信号的处理相关的模块<br>
+<li>Services：包括 CAN 状态管理以及 PDU、信号处理相关的模块<br>
 </li>
 </ul>
 <h3>CAN Driver</h3>
 <ul>
 <li>MCU的CAN外设控制模块</li>
-<li>主要数处理CAN的控制器中的功能，实现 数据在MCU CAN模块的收发<br>
+<li>主要处理 CAN 控制器功能，实现 MCU CAN 模块的数据收发<br>
 </li>
 </ul>
 <h4>MCAL相关配置</h4>
 <ul>
 <li>CanGeneral：配置一些API的使能函数周期等</li>
 <li>CanController：配置MCU的CAN外设操作功能以及CAN的Filter</li>
-<li>CanHaradwareObject：配置CAN的接收发送邮箱以及使用的Filter</li>
+<li>CanHardwareObject：配置CAN的接收发送邮箱以及使用的Filter</li>
 </ul>
 <h3>CANTrcv</h3>
-<p>CAN Trcv模块主要控制CAN外部收发器的模式，MCU的CAN信号与CAN总线建立起数据交互;目标是为适用于大多数当前和未来CAN收发器设备定义接口和行为。CAN Trcv抽象了CAN收发器硬件。它为更高层提供了一个独立于硬件的接口。 它通过使用MCAL层的API来访问CAN收发器硬件，以便实现ECU布局中的抽象化。<br>
+<p>CAN Trcv 模块抽象 CAN 收发器硬件，主要控制外部收发器的工作模式，并向上层提供独立于硬件的接口。它通过 MCAL 层 API 访问收发器，屏蔽 ECU 布局差异。MCU CAN 控制器的逻辑信号与总线电平之间的转换由收发器硬件完成。<br>
 </p>
 <h4>CANTrcv 模式切换</h4>
 <ul>
 <li>CANTrcv的模式转换主要通过控制Dio或者SPI来控制硬件Trcv</li>
-<li>上电调用Init可以直接切换到任意一个模式</li>
-<li>SetMode函数用于被MainFunction或者CANIf接口调用控制</li>
-<li>在支持唤醒的Trcv一定要确保下电进入Sleep，才能有唤醒功能，这个时候Trcv处于常电模式，且唤醒中断引脚连接SBC的唤醒引脚<br>
+<li>上电调用 Init 后的初始模式受配置及驱动实现约束，不能假定能够直接进入任意模式</li>
+<li>AUTOSAR 通过 CanTrcv_SetOpMode 请求模式切换，上层模块经 CAN Interface 访问驱动；MainFunction 是否调用供应商内部的 SetMode，需查看具体实现</li>
+<li>收发器是否在 Standby 或 Sleep 状态支持唤醒，取决于硬件及配置；常电供电、唤醒引脚与 SBC 的连接方式也需按实际硬件设计确认<br>
 </li>
 </ul>
 <h4>MCAL配置</h4>
 <p>·General：主要配置相关API的使能以及是否支持唤醒等功能<br>
 ·ConfigSet：根据外部电路配置Trcv的通道，主要分为DIO控制的和SPI控制的，DIO控制的根据使用的PIN关联到DIO通道，SPI控制的要分配SPI的Sequence</p>
 <h2>AUTOSAR CAN协议栈集成</h2>
+<p>本节尚未形成可复现的工程记录。实际集成时，需要结合所用 AUTOSAR 版本、MCAL 供应商与 ECU 硬件配置核对调用关系，不能将上述架构说明直接当作项目配置步骤。</p>
 <h2>AUTOSAR CAN调试策略</h2>
+<p>本节待补充实际现象、抓包或总线测量证据，以及相应的排查过程。</p>
 <h3>参考链接</h3>
 <p><a href="https://www.autosar.org/fileadmin/standards/R20-11/FO/AUTOSAR_TR_FoundationReleaseOverview.pdf" target="_blank" rel="noopener noreferrer">AUTOSAR_TR_FoundationReleaseOverview</a><br>
 AUTOSAR中国官方培训课程</p>
+<ul>
+<li><a href="https://www.can-cia.org/can-knowledge/can-hs-transmission" target="_blank" rel="noopener noreferrer">CiA：CAN 高速物理层、拓扑与速率/距离条件</a></li>
+<li><a href="https://community.nxp.com/t5/NXP-Tech-Blog/101-Controller-Area-Network-CAN-standard/ba-p/1217054" target="_blank" rel="noopener noreferrer">NXP：CAN 标准分层与节点构成</a></li>
+<li><a href="https://www.ti.com/lit/pdf/slla486" target="_blank" rel="noopener noreferrer">TI：CAN 节点数量与物理层约束</a></li>
+<li><a href="https://www.autosar.org/fileadmin/standards/R22-11/CP/AUTOSAR_SWS_CANDriver.pdf" target="_blank" rel="noopener noreferrer">AUTOSAR CAN Driver（R22-11）</a></li>
+<li><a href="https://www.autosar.org/fileadmin/standards/R21-11/CP/AUTOSAR_SWS_CANTransceiverDriver.pdf" target="_blank" rel="noopener noreferrer">AUTOSAR CAN Transceiver Driver（R21-11）</a></li>
+<li><a href="https://www.autosar.org/fileadmin/standards/R22-11/CP/AUTOSAR_EXP_LayeredSoftwareArchitecture.pdf" target="_blank" rel="noopener noreferrer">AUTOSAR Layered Software Architecture（R22-11）</a></li>
+<li><a href="https://www.analog.com/en/resources/app-notes/an-1123.html" target="_blank" rel="noopener noreferrer">Analog Devices：CAN 发送与仲裁条件</a></li>
+</ul>
 ]]></content>
     <category term="车载通信与网络"/>
     <published>2023-12-18T00:00:00.000Z</published>
@@ -1192,12 +1264,12 @@ AUTOSAR中国官方培训课程</p>
     <id>https://binkyle.github.io/blog/Autosar/autosar_solution_summary.html</id>
     <link href="https://binkyle.github.io/blog/Autosar/autosar_solution_summary.html"/>
     <updated>2023-12-17T00:00:00.000Z</updated>
-    <summary type="html"><![CDATA[<p>本文主要讲解Autosar解决方案相关内容</p>
+    <summary type="html"><![CDATA[<p>本文整理 AUTOSAR 的 AP、CP、FO 三部分及其关系。</p>
 ]]></summary>
-    <content type="html"><![CDATA[<p>本文主要讲解Autosar解决方案相关内容</p>
+    <content type="html"><![CDATA[<p>本文整理 AUTOSAR 的 AP、CP、FO 三部分及其关系。</p>
 <!-- more -->
 <h2>Autosar技术标准框架</h2>
-<p>AUTOSAR技术标准针对不同的需求提供了不同的解决方案，以涵盖汽车软件开发领域的各种应用场景</p>
+<p>AUTOSAR 不是一套适用于所有 ECU 的单一运行环境。Classic Platform（CP）与 Adaptive Platform（AP）面向不同类型的软件需求，Foundation（FO）则承担两者之间的通用规范。</p>
 <h3>Adaptive Platform(AP)</h3>
 <p>Adaptive Platform是AUTOSAR为开发安全相关的高算力ECU，如自动驾驶，而提供的解决方案</p>
 <p>AP分层软件架构特点:</p>
@@ -1216,18 +1288,18 @@ AUTOSAR中国官方培训课程</p>
 <p>CP分层软件架构支持：</p>
 <ul>
 <li>对硬件进行抽象，实现软硬解耦</li>
-<li>对Runnable和Task进行调度（操作系统）</li>
+<li>操作系统调度 Task，RTE 根据事件及映射配置组织 Runnable 的执行</li>
 <li>抽象部署在同一ECU或者不同ECU上的应用之间的通信，实现整车层面的虚拟功能总线</li>
 <li>故障诊断及诊断服务</li>
 <li>功能安全服务</li>
-<li>今信息安全服务<br>
+<li>信息安全服务<br>
 </li>
 </ul>
-<p>CP所定义的系统服务、存储、通信、硬件1/0和复杂驱动等各个基础软件技术栈，其作用类似于人体的神经系统。相对应地，控制器硬件可以理解为身体，而应用软件可以理解为大脑或灵魂。<br>
+<p>CP所定义的系统服务、存储、通信、硬件 I/O 和复杂驱动等各个基础软件技术栈，其作用类似于人体的神经系统。相对应地，控制器硬件可以理解为身体，而应用软件可以理解为大脑或灵魂。<br>
 </p>
 <h3>Foundation(FO)</h3>
 <p>Foundation包含了AP和CP之间通用的内容以保证二者之间以及二者与非AUTOSAR系统之间的兼容性</p>
-<p>原文如下：<br>
+<p>下面保留历史资料中的截图，具体来源和版本尚待核对：<br>
 <br>
 </p>
 
