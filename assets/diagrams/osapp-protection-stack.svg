@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="550" viewBox="0 0 1180 550" role="img" aria-label="OS Application 的四层保护及其实现位置"><title>OS Application 的四层保护及其实现位置</title><rect width="1180" height="550" fill="#f7fbfc"/><defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#246d78" stroke-width="1.6"/></marker><style>.title{font:700 29px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#143743}.sub{font:400 16px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#49636b}.head{font:700 20px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#174654}.body{font:500 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#244d5a}.small{font:400 15px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#4b6570}.white{font:700 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#fff}.line{stroke:#5394a1;stroke-width:2.5;fill:none;marker-end:url(#arrow)}.dash{stroke-dasharray:8 6}</style></defs>
+<text x="46" y="53" class="title">四个层次：从 OS 服务调用到硬件访存</text>
+<text x="46" y="84" class="sub">同一个 Task 的执行可能同时受到不同类型的规则约束</text>
+<rect x="43" y="117" width="1094" height="78" rx="14" fill="#e7f4f7" stroke="#abd2d9" stroke-width="2"/>
+<rect x="60" y="132" width="296" height="48" rx="10" fill="#236c77"/><text x="82" y="162" class="white">① Service Protection</text>
+<text x="389" y="150" class="body">OS 服务能否在当前上下文调用</text><text x="389" y="177" class="small">Task / ISR、调用级别、锁状态与参数约束</text>
+<rect x="43" y="211" width="1094" height="78" rx="14" fill="#e9f5ee" stroke="#b7d8c3" stroke-width="2"/>
+<rect x="60" y="226" width="296" height="48" rx="10" fill="#397f70"/><text x="82" y="256" class="white">② Object Access Control</text>
+<text x="389" y="244" class="body">当前 Application 是否获准使用目标 OS 对象</text><text x="389" y="271" class="small">所有权、跨 Application 访问许可</text>
+<rect x="43" y="305" width="1094" height="78" rx="14" fill="#f2eef9" stroke="#d1bee8" stroke-width="2"/>
+<rect x="60" y="320" width="296" height="48" rx="10" fill="#78629d"/><text x="82" y="350" class="white">③ CPU Privilege</text>
+<text x="389" y="338" class="body">是否具备执行特权操作的硬件资格</text><text x="389" y="365" class="small">处理器模式与受控切换</text>
+<rect x="43" y="399" width="1094" height="78" rx="14" fill="#fff5e8" stroke="#e4c69b" stroke-width="2"/>
+<rect x="60" y="414" width="296" height="48" rx="10" fill="#ba8652"/><text x="82" y="444" class="white">④ MPU Memory Protection</text>
+<text x="389" y="432" class="body">能否访问目标地址范围</text><text x="389" y="459" class="small">私有 RAM、栈、共享段、读写执行权限</text>
+<text x="46" y="519" class="small">Timing Protection 是并行的时间约束：执行预算、到达间隔以及资源/中断锁定时间。</text>
+</svg>

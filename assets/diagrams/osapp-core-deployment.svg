@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="580" viewBox="0 0 1180 580" role="img" aria-label="双核 ECU 的 OS Application 与任务归属示意"><title>双核 ECU 的 OS Application 与任务归属示意</title><rect width="1180" height="580" fill="#f7fbfc"/><defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#246d78" stroke-width="1.6"/></marker><style>.title{font:700 29px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#143743}.sub{font:400 16px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#49636b}.head{font:700 20px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#174654}.body{font:500 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#244d5a}.small{font:400 15px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#4b6570}.white{font:700 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#fff}.line{stroke:#5394a1;stroke-width:2.5;fill:none;marker-end:url(#arrow)}.dash{stroke-dasharray:8 6}</style></defs>
+<text x="44" y="50" class="title">双核 ECU：执行对象、Application 与通信</text>
+<text x="44" y="82" class="sub">每个 OS Application 静态分配到一个 Core；跨核状态通过明确的通信接口传递</text>
+<rect x="38" y="116" width="526" height="326" rx="20" fill="#e7f3f7" stroke="#b4d6df" stroke-width="2"/>
+<rect x="616" y="116" width="526" height="326" rx="20" fill="#e7f3f7" stroke="#b4d6df" stroke-width="2"/>
+<text x="65" y="151" class="head">Core 0 · 采样与诊断</text><text x="643" y="151" class="head">Core 1 · 控制</text>
+<rect x="60" y="176" width="240" height="230" rx="14" fill="#fff" stroke="#74b4ba" stroke-width="2"/>
+<rect x="316" y="176" width="226" height="230" rx="14" fill="#fff" stroke="#74b4ba" stroke-width="2"/>
+<rect x="640" y="176" width="475" height="230" rx="14" fill="#fff" stroke="#74b4ba" stroke-width="2"/>
+<rect x="60" y="176" width="240" height="47" rx="12" fill="#236c77"/><rect x="316" y="176" width="226" height="47" rx="12" fill="#367b84"/><rect x="640" y="176" width="475" height="47" rx="12" fill="#236c77"/>
+<text x="78" y="205" class="white">App_Acquisition</text><text x="334" y="205" class="white">App_Diagnostics</text><text x="658" y="205" class="white">App_Control</text>
+<text x="81" y="255" class="body">Task_Sample_10ms</text><text x="81" y="290" class="small">周期采集：10 ms</text><text x="81" y="322" class="small">关联：ADC 中断</text><text x="81" y="354" class="small">输出：SampleFrame</text>
+<text x="332" y="255" class="body">Task_Diag_100ms</text><text x="332" y="290" class="small">周期诊断：100 ms</text><text x="332" y="322" class="small">只读取状态摘要</text>
+<text x="661" y="255" class="body">Task_Control_10ms</text><text x="661" y="290" class="small">周期控制：10 ms</text><text x="661" y="322" class="small">接收并验证 SampleFrame</text><text x="661" y="354" class="small">输出：控制状态</text>
+<rect x="347" y="478" width="482" height="66" rx="14" fill="#d6ede9" stroke="#73ac9d" stroke-width="2"/>
+<text x="378" y="507" class="head">IOC 通道：SampleFrame</text><text x="378" y="530" class="small">生产者与消费者分核；访问与数据同步独立设计</text>
+<path d="M190 407 V458 H430 V476" class="line"/>
+<path d="M748 478 V458 H870 V407" class="line"/>
+<text x="55" y="476" class="small">发布</text><text x="884" y="469" class="small">读取</text>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="540" viewBox="0 0 1180 540" role="img" aria-label="三核启动 Barrier 的各核到达时间与等待区间"><title>三核启动 Barrier 的各核到达时间与等待区间</title><rect width="1180" height="540" fill="#f7fbfc"/><defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#246d78" stroke-width="1.6"/></marker><style>.title{font:700 29px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#143743}.sub{font:400 16px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#49636b}.head{font:700 20px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#174654}.body{font:500 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#244d5a}.small{font:400 15px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#4b6570}.white{font:700 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#fff}.line{stroke:#5394a1;stroke-width:2.5;fill:none;marker-end:url(#arrow)}.dash{stroke-dasharray:8 6}</style></defs>
+<text x="44" y="54" class="title">三核初始化会合：最慢参与者决定本轮放行点</text>
+<text x="44" y="86" class="sub">假设三个核分别在 t=2、5、8 ms 完成初始化</text>
+<text x="60" y="173" class="head">Core 0</text><text x="60" y="279" class="head">Core 1</text><text x="60" y="385" class="head">Core 2</text>
+<rect x="200" y="132" width="170" height="68" rx="10" fill="#b7dede"/><text x="231" y="173" class="body">初始化</text>
+<rect x="371" y="132" width="590" height="68" rx="10" fill="#f0d3a9"/><text x="560" y="173" class="body">Barrier 等待 · 6 ms</text>
+<rect x="200" y="238" width="369" height="68" rx="10" fill="#b7dede"/><text x="345" y="279" class="body">初始化</text>
+<rect x="570" y="238" width="391" height="68" rx="10" fill="#f0d3a9"/><text x="683" y="279" class="body">等待 · 3 ms</text>
+<rect x="200" y="344" width="760" height="68" rx="10" fill="#b7dede"/><text x="490" y="385" class="body">初始化 · 8 ms</text>
+<line x1="961" y1="121" x2="961" y2="426" stroke="#287b70" stroke-width="4" stroke-dasharray="8 7"/>
+<rect x="970" y="226" width="186" height="88" rx="14" fill="#e0efe9" stroke="#8ac0aa" stroke-width="2"/>
+<text x="990" y="260" class="head">全部到齐</text><text x="990" y="292" class="body">进入下一阶段</text>
+<text x="344" y="225" class="small">t=2 ms</text><text x="543" y="331" class="small">t=5 ms</text><text x="923" y="439" class="small">t=8 ms</text>
+<text x="46" y="488" class="body">Barrier 同步的是阶段进度，放行之后，各核仍独立执行。</text>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="550" viewBox="0 0 1180 550" role="img" aria-label="共享状态写入与读取使用同一把 Spinlock 的时序"><title>共享状态写入与读取使用同一把 Spinlock 的时序</title><rect width="1180" height="550" fill="#f7fbfc"/><defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#246d78" stroke-width="1.6"/></marker><style>.title{font:700 29px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#143743}.sub{font:400 16px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#49636b}.head{font:700 20px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#174654}.body{font:500 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#244d5a}.small{font:400 15px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#4b6570}.white{font:700 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#fff}.line{stroke:#5394a1;stroke-width:2.5;fill:none;marker-end:url(#arrow)}.dash{stroke-dasharray:8 6}</style></defs>
+<text x="44" y="52" class="title">共享数据：写入者与读取者都遵守同一把锁</text>
+<text x="44" y="83" class="sub">蓝色为持锁区间；橙色为等锁区间；时间从左到右</text>
+<line x1="194" y1="154" x2="1110" y2="154" stroke="#bed5d9" stroke-width="2"/>
+<line x1="194" y1="262" x2="1110" y2="262" stroke="#bed5d9" stroke-width="2"/>
+<line x1="194" y1="369" x2="1110" y2="369" stroke="#bed5d9" stroke-width="2"/>
+<text x="45" y="160" class="head">Core0 写任务</text><text x="45" y="268" class="head">Spinlock</text><text x="45" y="375" class="head">Core1 读任务</text>
+<rect x="229" y="123" width="193" height="61" rx="12" fill="#cce9ea"/><text x="250" y="158" class="body">准备数据</text>
+<rect x="422" y="123" width="380" height="61" rx="12" fill="#367d87"/><text x="459" y="159" class="white">持锁：复制 SampleFrame</text>
+<rect x="803" y="123" width="282" height="61" rx="12" fill="#e7f2f4"/><text x="824" y="159" class="body">释放后继续工作</text>
+<rect x="422" y="233" width="380" height="59" rx="12" fill="#367d87"/><text x="528" y="267" class="white">锁被 Core0 持有</text>
+<rect x="802" y="233" width="256" height="59" rx="12" fill="#367d87"/><text x="845" y="267" class="white">锁归 Core1</text>
+<rect x="350" y="340" width="452" height="59" rx="12" fill="#f5dbba"/><text x="433" y="375" class="body">请求锁 → 等待</text>
+<rect x="802" y="340" width="256" height="59" rx="12" fill="#367d87"/><text x="831" y="375" class="white">拷贝一致快照</text>
+<path d="M422 189 V226" class="line"/><path d="M802 292 V336" class="line"/>
+<text x="200" y="471" class="body">最重要的规则：读、写双方都覆盖完整复制过程，不让锁只保护一半操作。</text>
+<text x="200" y="503" class="small">核心规则：所有读写者必须遵守同一套互斥协议。</text>
+</svg>
