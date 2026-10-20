@@ -3,7 +3,7 @@
   <id>https://binkyle.github.io/</id>
   <title>孤星旅记</title>
   <subtitle>Bin 的工程探索与个人记录。沿着 AUTOSAR、车载网络与底层系统的脉络，在复杂系统中寻找秩序。</subtitle>
-  <updated>2026-10-19T17:09:34.378Z</updated>
+  <updated>2026-10-20T02:01:08.111Z</updated>
   <generator>@vuepress/plugin-feed</generator>
   <link rel="self" href="https://binkyle.github.io/atom.xml"/>
   <link rel="alternate" href="https://binkyle.github.io/"/>
@@ -54,7 +54,8 @@
 <h2>1. 先分清 Core、Task 与 OS Application</h2>
 <p>在单核实时系统里，我们最熟悉的是 Task：操作系统决定哪个任务处于 Ready、Running 或 Waiting 状态，并依据配置和调度规则选择执行者。</p>
 <p>在多核系统中，每个 Core 各自推进执行，OS 仍要管理任务、定时器、中断，以及跨核服务的使用。</p>
-<p><strong>OS Application 是 OS 对象的组织与保护边界，而不是一个新的 CPU Core。</strong> 按 AUTOSAR OS 术语，它组织由该 Application 拥有的 OS 对象，如 Task、Category 2 ISR、Alarm、Counter、Resource 等。具体对象类型、所有权及可访问性以所采用规范版本和配置约束为准。</p>
+<p><strong>OS Application 是 OS 对象的组织与保护边界，而不是一个新的 CPU Core。</strong> 按 AUTOSAR OS 的定义，Task、Category 2 ISR、Alarm、Counter、ScheduleTable 等对象归属于各自的 OS Application。</p>
+<p>这里有个容易忽略的区别：<strong>Resource 不归属于任何 OS Application，跨核 Spinlock 也遵循同样的原则。</strong> 调用者能否使用这些同步对象，由配置的访问权限决定。不能把“可以访问”理解成“拥有这个对象”。</p>
 <p>| 概念 | 主要回答的问题 | 不能据此直接推出 |<br>
 |</p>
 ]]></content>
