@@ -6,8 +6,8 @@
     <link>https://binkyle.github.io/</link>
     <description>Bin 的工程探索与个人记录。沿着 AUTOSAR、车载网络与底层系统的脉络，在复杂系统中寻找秩序。</description>
     <language>zh-CN</language>
-    <pubDate>Tue, 20 Oct 2026 02:01:08 GMT</pubDate>
-    <lastBuildDate>Tue, 20 Oct 2026 02:01:08 GMT</lastBuildDate>
+    <pubDate>Tue, 20 Oct 2026 02:44:17 GMT</pubDate>
+    <lastBuildDate>Tue, 20 Oct 2026 02:44:17 GMT</lastBuildDate>
     <generator>@vuepress/plugin-feed</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
     <category>嵌入式系统与 AUTOSAR</category>
@@ -22,19 +22,14 @@
       <description>从互斥与阶段会合两个问题切入，理解原子读改写、Spinlock、Barrier、内存可见性与实时调度的区别。</description>
       <category>嵌入式系统与 AUTOSAR</category>
       <pubDate>Mon, 19 Oct 2026 00:00:00 GMT</pubDate>
-      <content:encoded><![CDATA[<p>两个核要修改同一份共享数据，需要防止访问相互干扰；几个核必须各自完成初始化后才能继续，则要确认参与者是否都已到达。这两个场景都可能出现等待，解决的却不是同一个问题。</p>
-<p>前者主要是<strong>互斥（mutual exclusion）</strong>，后者是<strong>会合（rendezvous）</strong>。如果遇到等待就想到加 Spinlock，容易把初始化同步写成持锁忙等，甚至让系统卡在彼此等待的状态。</p>
-<p>本文讨论一般多核实时系统的设计方法。AUTOSAR Classic OS 规范定义了 Spinlock 等 OS 服务；<strong>Barrier 是这里讨论的通用并发设计概念，不能把供应商专用的 Barrier 服务视为所有 AUTOSAR OS 都具有的标准 API。</strong> 文中的流程图和状态案例为原创通用示意，不代表特定商业内核的代码或算法。</p>
+      <content:encoded><![CDATA[<p>多核处理器让多个执行者能够真正并行工作，也让共享数据的正确性成为架构问题。一个核正在更新数据，另一个核可能同时读取；若多个核必须完成各自的初始化，任何一个核提前进入下一阶段，都可能访问尚未就绪的状态。</p>
+<p>这些问题分别涉及<strong>原子操作、互斥、内存可见性和阶段同步</strong>。Spinlock 用于协调临界区的独占访问，Barrier 用于让多个参与者在某个阶段会合。二者的等待条件、调度代价和故障模式并不相同。</p>
+<p>本文从通用并发模型展开，结合 AUTOSAR Classic OS 的 Spinlock、Task/Event 服务以及 AURIX TC3xx 的公开硬件资料，讨论同步方案如何设计、实现与验证。这里的 Barrier 是通用算法概念，不对应某个商业 AUTOSAR OS 的私有 API。</p>
 <!-- more -->
-<h2>1. 先确定要满足的正确性条件</h2>
-<p>先看设计到底要满足哪种条件：</p>
-<ul>
-<li><strong>互斥条件</strong>：任何时刻，是否最多只允许一个执行者修改受保护对象？</li>
-<li><strong>会合条件</strong>：只有指定的全部执行者都完成上一阶段，是否才能进入下一阶段？</li>
-</ul>
-<p>假设两个核分别写共享缓冲区。保护目标是不能在第一个核复制数据到一半时，让第二个核同时覆盖或读取一个不一致的快照。这适合研究临界区与锁。</p>
-<p>另一个场景中，几个核各自初始化自己的数据结构，随后需要同时开始处理依赖全局状态的任务。即使各自初始化的对象互不相同，也仍然可能需要同步点。这时只用互斥锁并不能表达“大家到齐”。</p>
-<p>| 概念 | 保护目标 | 常见行为 | 主要风险 |<br>
+<h2>1. 多核同步的四个基本问题</h2>
+<p>在一个双核 ECU 上，Core0 更新传感器采样结果，Core1 根据最新结果执行计算。假设共享数据包含时间戳、状态和一组测量值。即使单个字段的访问足够短，读取者也可能在写入尚未完成时获得新旧混合的数据。</p>
+<p>一个正确的通信方案需要分别回答四个问题：</p>
+<p>| 维度 | 关注内容 | 设计对象 |<br>
 |</p>
 ]]></content:encoded>
     </item>
@@ -46,16 +41,25 @@
       <description>从 Task 与 ISR 的归属出发，区分 OS Application、Service Protection、Trusted 和 MPU，建立可以核对的分区设计方法。</description>
       <category>嵌入式系统与 AUTOSAR</category>
       <pubDate>Mon, 19 Oct 2026 00:00:00 GMT</pubDate>
-      <content:encoded><![CDATA[<p>在多核 ECU 的架构图里，Core 和 OS Application 经常画在一起，但它们不是同一种边界。一个 Core 可以运行不同 OS Application 的任务；配置了多个 OS Application，也不等于拥有桌面操作系统进程那样独立的虚拟地址空间。</p>
-<p>分析这类配置，要先分清三个问题：<strong>执行实体属于谁，OS 允许它使用哪些服务，硬件是否限制它访问某块内存。</strong> OS Application 把这些问题联系起来，却不能替代其中任何一层保护。</p>
-<p>本文以 <a href="https://www.autosar.org/fileadmin/standards/R24-11/CP/AUTOSAR_CP_SWS_OS.pdf" target="_blank" rel="noopener noreferrer">AUTOSAR Classic Platform R24-11 的 OS 规范</a> 为主要依据，讨论标准概念与通用设计检查方法。示意场景不代表任何真实 ECU 配置，也不涉及商业 OS 的内部代码。</p>
+      <content:encoded><![CDATA[<p>一个多核 ECU 的软件架构，通常从功能模块和 Core 分配开始设计。但程序运行以后，操作系统还需要管理任务、中断、定时器、共享资源，以及不同软件之间允许发生哪些交互。<strong>OS Application 把这些运行实体组织为可配置的管理与保护单元</strong>，使系统设计能够从“有哪些功能”进一步落实到“谁执行、谁拥有、谁能够访问”。</p>
+<p>这篇文章从 AUTOSAR Classic OS 的对象模型出发，介绍多核部署、访问控制、可信级别、服务保护、MPU 与错误恢复之间的关系，再给出一个可复用的分区设计案例。内容依据 <a href="https://www.autosar.org/fileadmin/standards/R24-11/CP/AUTOSAR_CP_SWS_OS.pdf" target="_blank" rel="noopener noreferrer">AUTOSAR CP R24-11 OS 规范</a>；示例是为解释通用机制构造的假设系统，不包含任何商业 OS 内部实现或项目配置。</p>
 <!-- more -->
-<h2>1. 先分清 Core、Task 与 OS Application</h2>
-<p>在单核实时系统里，我们最熟悉的是 Task：操作系统决定哪个任务处于 Ready、Running 或 Waiting 状态，并依据配置和调度规则选择执行者。</p>
-<p>在多核系统中，每个 Core 各自推进执行，OS 仍要管理任务、定时器、中断，以及跨核服务的使用。</p>
-<p><strong>OS Application 是 OS 对象的组织与保护边界，而不是一个新的 CPU Core。</strong> 按 AUTOSAR OS 的定义，Task、Category 2 ISR、Alarm、Counter、ScheduleTable 等对象归属于各自的 OS Application。</p>
-<p>这里有个容易忽略的区别：<strong>Resource 不归属于任何 OS Application，跨核 Spinlock 也遵循同样的原则。</strong> 调用者能否使用这些同步对象，由配置的访问权限决定。不能把“可以访问”理解成“拥有这个对象”。</p>
-<p>| 概念 | 主要回答的问题 | 不能据此直接推出 |<br>
+<h2>1. OS Application 在 Classic OS 中的位置</h2>
+<p>AUTOSAR Classic 的执行模型可以从三个层次理解：应用软件提供业务逻辑，RTE 将 Runnable 与通信接口接入运行环境，OS 则负责 Task/ISR 等执行实体的调度和管理。</p>
+<p>在配置阶段，软件设计者需要把 Runnable 映射到 Task，将 Task、ISR 及相关 OS 对象归入某个 OS Application。多核系统中，OS Application 进一步静态绑定到指定 Core。</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>应用与 BSW 功能</span></span>
+<span class="line"><span>       │ RTE / BSW 调用和映射</span></span>
+<span class="line"><span>       ▼</span></span>
+<span class="line"><span>Task / ISR：实际执行上下文</span></span>
+<span class="line"><span>       │ 对象归属</span></span>
+<span class="line"><span>       ▼</span></span>
+<span class="line"><span>OS Application：管理和保护边界</span></span>
+<span class="line"><span>       │ 配置时绑定</span></span>
+<span class="line"><span>       ▼</span></span>
+<span class="line"><span>    OS Core / MCU Core</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>图中箭头表示分析和配置关系，不代表每次函数调用都要经过图示中的全部软件层。</p>
+<h3>1.1 Core、OS Application、Task 与软件分区</h3>
+<p>| 层次 | 核心职责 | 典型配置或实例 |<br>
 |</p>
 ]]></content:encoded>
     </item>
