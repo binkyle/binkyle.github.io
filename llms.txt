@@ -11,6 +11,7 @@
 - [车载以太网 Switch](https://binkyle.github.io/blog/Ethernet/Switch/): 从一根连线到一帧报文，看清硬件、转发与配置之间的关系。
 - [嵌入式运行时测量](https://binkyle.github.io/blog/Autosar/RuntimeMeasurement/): 给时间与栈空间建立账本，让系统的运行有迹可循。
 - [AUTOSAR 与底层系统](https://binkyle.github.io/topics/autosar.html): 沿着状态、编译与执行的路径，理解抽象之下的工程机制。
+- [机器人系统软件与具身智能](https://binkyle.github.io/blog/Robotics/): 从 C++、Linux 与 ROS2 通信出发，理解机器人运行时、控制接口和可验证的工程实践。
 
 ## 精选文章
 - [跨核不是缓存问题：从 AUTOSAR COM Deferred EventCache 看事件与状态一致性](https://binkyle.github.io/blog/Autosar/autosar_com_cross_core_deferred_eventcache_consistency.html): 从可构造的双核交错分析事件与状态的不一致，区分缓存可见性、原子性、顺序与跨核互斥。

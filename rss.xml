@@ -6,14 +6,53 @@
     <link>https://binkyle.github.io/</link>
     <description>Bin 的工程探索与个人记录。沿着 AUTOSAR、车载网络与底层系统的脉络，在复杂系统中寻找秩序。</description>
     <language>zh-CN</language>
-    <pubDate>Tue, 20 Oct 2026 05:07:34 GMT</pubDate>
-    <lastBuildDate>Tue, 20 Oct 2026 05:07:34 GMT</lastBuildDate>
+    <pubDate>Wed, 21 Oct 2026 03:26:08 GMT</pubDate>
+    <lastBuildDate>Wed, 21 Oct 2026 03:26:08 GMT</lastBuildDate>
     <generator>@vuepress/plugin-feed</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+    <category>机器人系统软件与具身智能</category>
     <category>嵌入式系统与 AUTOSAR</category>
     <category>车载通信与网络</category>
     <category>编程与软件工程</category>
     <category>阅读与思考</category>
+    <item>
+      <title>人形机器人系统软件的技术能力地图与工程实践路线</title>
+      <link>https://binkyle.github.io/blog/Robotics/systems-software-roadmap.html</link>
+      <guid>https://binkyle.github.io/blog/Robotics/systems-software-roadmap.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">人形机器人系统软件的技术能力地图与工程实践路线</source>
+      <description>沿着指令、通信、控制、硬件抽象与反馈构建机器人系统软件能力地图，并设计从 ROS2 通信实验到运行时平台的工程实践路线。</description>
+      <category>机器人系统软件与具身智能</category>
+      <pubDate>Wed, 21 Oct 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>机器人能否完成一个动作，既取决于感知和策略，也取决于软件系统能否把期望动作变成及时、合法、可观测的控制指令。一个表现出色的模型，如果不能持续获得正确的状态、不能控制执行延迟，或在通讯异常时缺少明确的降级机制，仍难以构成可靠的机器人产品。</p>
+<p><strong>机器人系统软件的核心任务，是让感知、决策、通信、控制和设备执行形成有约束、可观察、可验证的闭环。</strong> 本文沿着这个闭环建立技术地图，并提出以实际工程验证为中心的学习路线。</p>
+<p>这是一篇<strong>架构与实践路线文章</strong>。截至 2026-10-21，配套实验仓库已建立独立 C++17 编译测试基础，但 ROS2 节点、机器人控制仿真和端到端测量尚未完成，文中的系统结构是目标设计，而非已经交付的整机软件。</p>
+<h2>1. 从一条机器人动作命令理解系统分层</h2>
+<p>假设一个仿真机器人需要让某个关节移动至目标位置。一条指令通常涉及：</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>感知/任务层             视觉、场景和任务状态</span></span>
+<span class="line"><span>    │ 意图/目标</span></span>
+<span class="line"><span>    ▼</span></span>
+<span class="line"><span>决策/规划层             目标动作、轨迹或期望关节状态</span></span>
+<span class="line"><span>    │ 高层命令（带有效期与约束）</span></span>
+<span class="line"><span>    ▼</span></span>
+<span class="line"><span>ROS2 通信层             Topic / Service / Action / DDS QoS</span></span>
+<span class="line"><span>    │ 数据分发、回调执行</span></span>
+<span class="line"><span>    ▼</span></span>
+<span class="line"><span>运行时与控制层         时间戳检查、状态机、控制器、调度</span></span>
+<span class="line"><span>    │ 有界控制指令</span></span>
+<span class="line"><span>    ▼</span></span>
+<span class="line"><span>硬件抽象层             关节接口、传感器接口、驱动适配</span></span>
+<span class="line"><span>    │</span></span>
+<span class="line"><span>    ▼</span></span>
+<span class="line"><span>仿真或物理执行器       位置、速度、力矩及传感器反馈</span></span>
+<span class="line"><span>    │</span></span>
+<span class="line"><span>    └────────── 状态反馈回到运行时、控制与感知层</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这里展示的是<strong>职责分层</strong>，不是规定每台机器人都必须按七层部署，也不表示 ROS2 一定参与最底层高频关节控制。实际系统可能将控制闭环放在独立实时控制器上，并通过 ROS2 传递目标、状态与任务。</p>
+<p>这个区分十分重要：模型推理可能需要几十毫秒乃至更久，而电机控制环路常有严格得多的周期要求。不同周期的模块不应被一个未经测量的共享执行链路强行串成同频闭环。</p>
+<h2>2. 每项核心技术解决什么问题</h2>
+<p>| 技术 | 工程职责 | 需要证明的能力 |<br>
+|</p>
+]]></content:encoded>
+    </item>
     <item>
       <title>多核同步机制：Spinlock、Barrier 与原子操作的设计边界</title>
       <link>https://binkyle.github.io/blog/Autosar/autosar_multicore_spinlock_barrier.html</link>
