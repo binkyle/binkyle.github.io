@@ -6,8 +6,8 @@
     <link>https://binkyle.github.io/</link>
     <description>Bin 的工程探索与个人记录。沿着 AUTOSAR、车载网络与底层系统的脉络，在复杂系统中寻找秩序。</description>
     <language>zh-CN</language>
-    <pubDate>Wed, 21 Oct 2026 03:26:08 GMT</pubDate>
-    <lastBuildDate>Wed, 21 Oct 2026 03:26:08 GMT</lastBuildDate>
+    <pubDate>Wed, 21 Oct 2026 03:51:57 GMT</pubDate>
+    <lastBuildDate>Wed, 21 Oct 2026 03:51:57 GMT</lastBuildDate>
     <generator>@vuepress/plugin-feed</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
     <category>机器人系统软件与具身智能</category>
@@ -15,6 +15,45 @@
     <category>车载通信与网络</category>
     <category>编程与软件工程</category>
     <category>阅读与思考</category>
+    <item>
+      <title>一条 ROS2 控制指令的执行路径：从消息到回调，再到控制时效</title>
+      <link>https://binkyle.github.io/blog/Robotics/ros2-command-lifecycle.html</link>
+      <guid>https://binkyle.github.io/blog/Robotics/ros2-command-lifecycle.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">一条 ROS2 控制指令的执行路径：从消息到回调，再到控制时效</source>
+      <description>沿一个虚拟关节命令追踪 ROS2 Topic、DDS QoS、Executor、Callback Group 和超时判定，分清消息可靠送达、及时处理与允许执行的边界。</description>
+      <category>机器人系统软件与具身智能</category>
+      <pubDate>Wed, 21 Oct 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>机器人系统里常有这样的现象：Publisher 按计划周期发送消息，Subscriber 也能够收到，但控制器仍然感到“慢半拍”。把原因归结为网络延时很容易，问题却可能出在消息队列、Executor 回调、线程调度，或者指令本身已经过期。</p>
+<p>这里从一个简单场景展开：<strong>规划节点发送某个关节的目标位置，执行节点检查命令后交给控制接口。</strong> 我们不预设运行平台、不声称这是任何实机的实现；用公开的 ROS2 机制和一个虚拟案例，建立可以逐步验证的时序模型。</p>
+<h2>1. 先看清消息经过的几段路</h2>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>Planner Node                         Control Node</span></span>
+<span class="line"><span>   │</span></span>
+<span class="line"><span>   │ ① 生成 joint target、seq、stamp</span></span>
+<span class="line"><span>   │</span></span>
+<span class="line"><span>   ├── ② rclcpp Publisher::publish()</span></span>
+<span class="line"><span>   │          │</span></span>
+<span class="line"><span>   │          ▼</span></span>
+<span class="line"><span>   │    RMW / DDS（匹配QoS、缓存与传输）</span></span>
+<span class="line"><span>   │          │</span></span>
+<span class="line"><span>   │          └──────────────────► ③ 消息变为可获取</span></span>
+<span class="line"><span>   │                                  │</span></span>
+<span class="line"><span>   │                             ④ Executor 发现就绪</span></span>
+<span class="line"><span>   │                                  │</span></span>
+<span class="line"><span>   │                             ⑤ 调用 Subscription 回调</span></span>
+<span class="line"><span>   │                                  │</span></span>
+<span class="line"><span>   │                             ⑥ 检查时效、状态与限幅</span></span>
+<span class="line"><span>   │                                  │</span></span>
+<span class="line"><span>   │                             ⑦ 交给控制接口</span></span>
+<span class="line"><span>   │                                  │</span></span>
+<span class="line"><span>   │                             ⑧ 控制循环 / 驱动写入</span></span>
+<span class="line"><span>   │                                  │</span></span>
+<span class="line"><span>   ◄────────────── ⑨ 关节状态或异常反馈 ────┘</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>从代码看，调用 <code>publish()</code> 只说明应用向通信层提交了消息。它不能单独证明对端已经收到，更不能证明执行器接受了命令。</p>
+<p>为此，讨论性能和错误时最好把路径分开：</p>
+<p>| 环节 | 主要问题 | 典型可观察信息 |<br>
+|</p>
+]]></content:encoded>
+    </item>
     <item>
       <title>人形机器人系统软件的技术能力地图与工程实践路线</title>
       <link>https://binkyle.github.io/blog/Robotics/systems-software-roadmap.html</link>
