@@ -6,15 +6,215 @@
     <link>https://binkyle.github.io/</link>
     <description>Bin 的工程探索与个人记录。沿着 AUTOSAR、车载网络与底层系统的脉络，在复杂系统中寻找秩序。</description>
     <language>zh-CN</language>
-    <pubDate>Wed, 21 Oct 2026 05:27:37 GMT</pubDate>
-    <lastBuildDate>Wed, 21 Oct 2026 05:27:37 GMT</lastBuildDate>
+    <pubDate>Fri, 06 Nov 2026 16:39:06 GMT</pubDate>
+    <lastBuildDate>Fri, 06 Nov 2026 16:39:06 GMT</lastBuildDate>
     <generator>@vuepress/plugin-feed</generator>
     <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
-    <category>机器人系统软件与具身智能</category>
     <category>嵌入式系统与 AUTOSAR</category>
+    <category>机器人系统软件与具身智能</category>
     <category>车载通信与网络</category>
     <category>编程与软件工程</category>
     <category>阅读与思考</category>
+    <item>
+      <title>从硬件错误源到 AUTOSAR 通知：RH850 ECM EIC9 中断处理全链路</title>
+      <link>https://binkyle.github.io/blog/Autosar/RH850/rh850-ecm-eic9.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/RH850/rh850-ecm-eic9.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">从硬件错误源到 AUTOSAR 通知：RH850 ECM EIC9 中断处理全链路</source>
+      <description>结合 RH850/U2A 的 EIC9 案例，解释 DCLS 中断路由、ECM Master/Checker 状态、PE 掩码、通知过滤、一致性诊断和写一清零，区分硬件错误与软件有效状态。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Sat, 07 Nov 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>调试器反复停在 <code>MCU_ECM_EIC9_ISR</code> 时，最先需要弄清的是这个中断为什么被请求。某次记录里，软件变量 <code>LulEcmStatusData</code> 为零，<code>LblEicIntEnable</code> 为一，驱动报告了 <code>MCU_E_ECM_INT_INCONSISTENT</code>。乍看像是“没有错误却进了错误中断”，实际上这三个量来自处理过程的不同层次。</p>
+<p>ECM 锁存错误状态，中断控制器接收请求，MCU Driver 再根据配置过滤、通知和清除。任何一层的零值，都需要放回它产生的位置解释。</p>
+<p>本文以 RH850/U2A、G4MH 内核和一个 AUTOSAR MCU Driver 配置为例。寄存器通用机制参考 Renesas 官方资料；PE 路由、CAT1 分类和软件条件来自案例静态记录。尚未取得同一次运行的完整原始状态，具体错误源仍待确认。</p>
+<!-- more -->
+<h2>1. ECM 收集错误，EIC9 对应特定的通知路径</h2>
+<p>ECM（Error Control Module）汇集芯片内部和外部错误源，并按配置产生中断、错误输出或复位等反应。错误源、状态位、通知使能和最终反应是几件不同的事：错误状态被置位，不意味着所有输出都同时触发。</p>
+<p>U2A 官方应用笔记列出了三条 ECM 中断路径：普通的 EI 级错误通知 <code>INTECMME</code> 对应 EIINT8；DCLS 错误通知 <code>INTECMDCLSMI</code> 对应 EIINT9；另一条 ECM 通知使用 FE 级 FEINT。这里的 DCLS 指双核锁步相关的检测路径。<strong>不能把 EIC9 当作所有 ECM 错误的共同入口。</strong>[1]</p>
+<figure><img src="/assets/rh850/ecm-routing.svg" alt="ECM 普通错误、DCLS 错误与 FE 级通知的不同路径" tabindex="0" loading="lazy"><figcaption>ECM 普通错误、DCLS 错误与 FE 级通知的不同路径</figcaption></figure>
+<p>案例把 EIC9 配置为 INTC1、通道 9、优先级配置值 1、目标 Core0，并使用 CAT1 入口。这里的 9 是通道号，1 是该配置中的优先级值，都不表示执行周期。</p>
+<p>进入这个 ISR，说明中断请求已沿某条路径得到处理。它本身不告诉我们错误刚刚发生，还是先前请求尚待处理；也不能说明这次入口与前一次 CPU 内存异常具有直接因果关系。周期性硬件测试可能周期性产生事件，但 EIC9 入口仍然由事件请求驱动。</p>
+<h2>2. MESSTR 与 CESSTR 是 Master/Checker 状态</h2>
+<p>ECM 为安全检测使用 Master 与 Checker 两套实例。<code>ECMMESSTRj</code> 对应 Master 的错误源状态，<code>ECMCESSTRj</code> 对应 Checker 的错误源状态。名称中的 M/C 不能解释成“可屏蔽/可纠正”。错误是否可屏蔽、通过哪一级通知，要看另外的配置。[1]</p>
+<p>每组状态寄存器包含多个错误位。软件必须保留“组号 + 位号”，才能回到手册中的具体错误源。把所有组做按位 OR，可以快速判断是否存在有效状态，却会丢失组号。例如第 2 组和第 7 组的 bit 3 在 OR 结果中都只表现为 bit 3，不能据此反推出同一个错误源。</p>
+<p>| 名称或软件量 | 描述的层次 | 读数能够回答的问题 |<br>
+|</p>
+]]></content:encoded>
+      <enclosure url="https://binkyle.github.io/assets/rh850/ecm-routing.svg" type="image/svg+xml"/>
+    </item>
+    <item>
+      <title>RH850 内存异常定位实战：用 GHS Watchpoint、MAP/ELF 与汇编追踪写入链</title>
+      <link>https://binkyle.github.io/blog/Autosar/RH850/rh850-ghs-memory-fault-debugging.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/RH850/rh850-ghs-memory-fault-debugging.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">RH850 内存异常定位实战：用 GHS Watchpoint、MAP/ELF 与汇编追踪写入链</source>
+      <description>用真实调试记录中的相对关系说明如何保存 FE 级现场、核对 MAP/ELF、计算 PREPARE 栈写入、追溯 r31 来源，并辨别观察点命中与故障因果之间的距离。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Sat, 07 Nov 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>硬件观察点终于命中了，停机 PC 却落在一个任务入口的 <code>prepare</code> 序言附近。内存里出现的可疑数值，恰好就是当时几个普通寄存器中的数据。这种现场比“某行代码越界了”更难解释：写入本身可能完全正常，问题发生在另一个执行流随后怎样使用这块内存。</p>
+<p>本文沿一次 RH850/U2A 内存异常的记录，说明如何从异常地址找到对象，再从写入 PC 找到汇编和栈槽。现有线索支持继续调查两个相邻任务栈的重叠使用；尚未记录到完整的“写坏返回槽、恢复错误 LP、跳到数据区”过程，因而没有最终根因和修复回归结论。</p>
+<p>平台为 G4MH 内核、MICROSAR OS、GHS 工具链与 MULTI 7.1.6。下文使用 TaskA/TaskB、边界 <code>B</code> 和对象地址 <code>C_A</code>，只保留定位所需的地址关系。</p>
+<!-- more -->
+<h2>1. 先辨认让 CPU 停下来的事件</h2>
+<p>同一轮调试中，可能先后遇到五种不同的入口。先记录停机原因，再开始解释调用栈。</p>
+<p>| 看到的现象 | 它首先说明什么 | 下一步保存什么 |<br>
+|</p>
+]]></content:encoded>
+      <enclosure url="https://binkyle.github.io/assets/rh850/debug-evidence-flow.svg" type="image/svg+xml"/>
+    </item>
+    <item>
+      <title>RH850 OS 上下文切换与栈保护：从 Context Save/Restore 到 MPU 栈边界</title>
+      <link>https://binkyle.github.io/blog/Autosar/RH850/rh850-os-context-stack-mpu.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/RH850/rh850-os-context-stack-mpu.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">RH850 OS 上下文切换与栈保护：从 Context Save/Restore 到 MPU 栈边界</source>
+      <description>从一个异常 LP 指向 Context 对象的现场出发，解释 RH850/U2A 中任务上下文、栈帧、MPU 栈窗口与相邻栈覆盖的关系，并区分保存值和故障瞬间寄存器。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Sat, 07 Nov 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>一次 RH850 内存异常中，FEPC 和 LP 都指向了一个任务 Context 对象的首地址。这个巧合很容易把排查带向“OS 恢复错了上下文”。但沿着 MAP、结构体布局和栈帧继续看，会发现几件不同的事：对象地址可以作为普通数据被压栈；LP 可以从栈上恢复，也可以从 Context 字段恢复；异常处理函数里看到的 SP，还可能已经属于内核栈。</p>
+<p>理解这些关系，才能判断眼前的是被破坏的控制流、保存得很正常的数据，还是另一个时间点留下的现场。</p>
+<p>本文讨论 RH850/U2A 的 G4MH 内核与一个 MICROSAR OS 实现。Context 字段和 Region0 用途来自该案例的静态资料，不构成 AUTOSAR 对所有实现的布局规定。示意代码只表达机制。</p>
+<!-- more -->
+<h2>1. Context 把任务接回原来的执行位置</h2>
+<p>任务切换时，CPU 不会保留两套同时活动的普通寄存器。OS 必须把当前任务恢复执行所需的信息留在内存里，再将下一任务的状态装回硬件。对于独立栈任务，这些信息通常分散在两个地方：一个是 OS 管理的 Context 对象，另一个是任务自身的栈。</p>
+<p>Context 负责找到恢复点和栈，栈帧则承载函数调用过程中保存的寄存器、局部变量与返回链。某个寄存器没有出现在 Context 结构里，往往意味着它由汇编入口、编译器调用约定或已有栈帧负责保存。判断“上下文是否保存完整”，必须沿实际切换入口检查，不能只数结构体成员。</p>
+<p>还要区分首次启动与恢复执行。首次启动没有一条真实的历史调用链，OS 根据配置构造入口、初始 SP、PSW 和返回处理函数。任务被抢占或主动让出 CPU 后，恢复使用的是已经运行过的状态。相同的 LP 字段，在这两个阶段可能分别表示初始返回处理入口与某次切换保存的返回地址。</p>
+<h3>Config 与 Dyn 的分工</h3>
+<p>本案例的静态 Config 存在常量区，提供任务入口、返回处理入口、栈边界及状态初值；Dyn 位于可写 RAM，保存运行时可变状态。初始化将 Config 中的相关值写入 Dyn，后续切换更新或消费 Dyn。</p>
+<figure><img src="/assets/rh850/context-init.svg" alt="静态任务配置、初始化与动态上下文之间的对应关系" tabindex="0" loading="lazy"><figcaption>静态任务配置、初始化与动态上下文之间的对应关系</figcaption></figure>
+<p>把 NOINIT 段里的 Dyn 展开后，看到的值也需要绑定生命周期：OS 尚未初始化时可能是旧 RAM 内容，任务运行中可能是上次切出时的保存值，停在切换中间时还可能只有部分字段已经更新。字段可读，并不保证整份对象是同一瞬间的原子快照。</p>
+<h2>2. 九个字段连接四个层次</h2>
+<p>案例资料给出的 <code>Os_Hal_ContextType</code> 大小为 <code>0x24</code>，包含九个 32 位字段。以下偏移只用于解释这份实现；在另一个工程里，应通过类型定义和当前 ELF 的调试信息重新确认。初始化函数的赋值顺序本身不能证明结构体布局。</p>
+<figure><img src="/assets/rh850/context-layout.svg" alt="案例 Context 的九个字段及其职责分组" tabindex="0" loading="lazy"><figcaption>案例 Context 的九个字段及其职责分组</figcaption></figure>
+<p>| 偏移 | 字段 | 初始来源 | 运行中的意义 |<br>
+|</p>
+]]></content:encoded>
+      <enclosure url="https://binkyle.github.io/assets/rh850/context-init.svg" type="image/svg+xml"/>
+    </item>
+    <item>
+      <title>Green Hills MULTI 调试 RH850/U2A：从连接失败到 Flash 下载与断点优化</title>
+      <link>https://binkyle.github.io/blog/Autosar/green_hills_multi_rh850_u2a_debugging.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/green_hills_multi_rh850_u2a_debugging.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">Green Hills MULTI 调试 RH850/U2A：从连接失败到 Flash 下载与断点优化</source>
+      <description>以 RH850/U2A16、E2 LPD 和 MULTI 7.1.6 的一次调试经历为线索，整理 Device File、LPD 建链、Flash 编程、错误日志、源码断点及 GHS 编译优化的排查方法。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Sat, 31 Oct 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>调试嵌入式软件时，最消耗精力的情况未必是代码崩溃，而是调试器还没有进入代码：连接失败、Flash 写入超时，或明明能看到源码却无法设置断点。</p>
+<p>最近使用 Green Hills MULTI 调试 RH850/U2A 系列 MCU 时，依次遇到了 LPD 唤醒错误、DCU 访问错误、ICUM 状态提示、Flash 下载超时，以及源代码行被编译器合并的问题。它们看起来都发生在同一个调试界面里，但并不属于同一个故障层次。</p>
+<p>这篇文章不把一串错误码当成故障根因，而是整理出一套更稳妥的排查路径：<strong>先确认目标连接，再验证程序下载，最后讨论源码级调试的可信度。</strong></p>
+<blockquote>
+<p><strong>环境与边界</strong>：本文基于 RH850/U2A16 项目场景、Green Hills MULTI 7.1.6、850eserv2 V2.066、Renesas E2 和四线 LPD 的操作记录。文中的连接参数、文件名与日志均已抽象化，不包含项目目录、认证凭据和生产配置。不同芯片子型号、板卡接线及工具版本可能有差异；示例不是可直接复制到任意 ECU 的默认配置。</p>
+</blockquote>
+<!-- more -->
+<h2>1. 先弄清楚调试链路</h2>
+<p>MULTI 不是直接操作 MCU 内部寄存器。典型的 RH850 调试链路可以理解为：</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>MULTI（源码、断点、寄存器与内存窗口）</span></span>
+<span class="line"><span>         │</span></span>
+<span class="line"><span>         ▼</span></span>
+<span class="line"><span>850eserv2（目标连接与调试服务）</span></span>
+<span class="line"><span>         │</span></span>
+<span class="line"><span>         ▼</span></span>
+<span class="line"><span>Renesas E2（调试仿真器）</span></span>
+<span class="line"><span>         │  LPD4 / JTAG，取决于实际接线与设备支持</span></span>
+<span class="line"><span>         ▼</span></span>
+<span class="line"><span>RH850（调试资源、PE 核、RAM、Code Flash、安全配置）</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这里有两个容易混淆的术语：</p>
+<ul>
+<li><strong>DCU（Debug Control Unit）</strong>：与芯片调试访问有关的硬件调试控制资源。出现 <code>DCU access error</code>，重点应放在调试接口、设备定义文件、目标状态和调试权限，而不是直接定位某一行 C 代码。</li>
+<li><strong>RSU</strong>：出现在 <code>850eserv2</code> 输出里的 <code>RSU info write error</code>。仅凭弹窗不足以可靠确认该缩写的完整名称，也不能把它当作某个已确定的应用层模块；排查时应优先阅读后面更具体的原因说明。</li>
+</ul>
+<p>对于 U2A 系列，调试与独立 Flash 烧录也要分清。Renesas 的 E2 连接手册列出了调试所用的四线 LPD/JTAG，以及 RFP 串行编程所用的两线 UART/CSI。<strong>能通过某种接口调试，不意味着同一接线必然满足另一种烧录模式。</strong></p>
+<h2>2. Connection Editor：先对照真实硬件，再改参数</h2>
+<p>在 MULTI 的 <strong>Renesas V850/V850E ICE（850eserv2）Connection Editor</strong> 中，最值得逐项检查的是：</p>
+<p>| 页面 | 关键项目 | 检查方式 |<br>
+|</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>AUTOSAR DoIP TCP 监听建立全链路：Socket 缓冲池、精确匹配与诊断验证</title>
+      <link>https://binkyle.github.io/blog/Autosar/autosar_doip_tcp_listener_buffer_pool.html</link>
+      <guid>https://binkyle.github.io/blog/Autosar/autosar_doip_tcp_listener_buffer_pool.html</guid>
+      <source url="https://binkyle.github.io/rss.xml">AUTOSAR DoIP TCP 监听建立全链路：Socket 缓冲池、精确匹配与诊断验证</source>
+      <description>从 DoIP UDP 发现正常但 TCP 无法握手的现象出发，沿 SoAd Listener 建立路径理解 TcpIp 静态缓冲池的精确匹配机制，并用协议抓包验证修复。</description>
+      <category>嵌入式系统与 AUTOSAR</category>
+      <pubDate>Fri, 30 Oct 2026 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>在一次 AUTOSAR Classic 以太网诊断联调中，ECU 能够响应 DoIP 的 UDP 发现请求，诊断仪却无法通过 TCP 13400 建立会话。网络抓包中，诊断仪发出 SYN，ECU 返回 RST/ACK。单看这一组报文，很容易把注意力集中在端口、防火墙或者 TCP 状态机上。</p>
+<p>真正决定这条连接能否建立的条件，发生在 SYN 到来之前：<strong>SoAd 申请到了 TcpIp Socket，但在配置该 Socket 的接收缓冲区时失败，因而没有走到 Bind 和 Listen。</strong></p>
+<p>这篇文章沿着这条实际调用链，介绍 AUTOSAR DoIP 的协议分层、SoAd 的监听建立过程，以及一种固定规格 TCP Buffer Pool 的分配设计。文中涉及的配置数值和结构图均为<strong>匿名化原理示例</strong>，不是原工程的 ECUC 导出或抓包重放。函数名用于定位机制，代码为重新编写的概念示例，不是供应商源码。</p>
+<!-- more -->
+<h2>1. 从 UDP 发现到 TCP 诊断，是两条不同的路径</h2>
+<p>DoIP（Diagnostics over Internet Protocol）将车载诊断承载到 IP 网络上。一次典型的测试可以分为三个阶段：</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>诊断仪                          ECU / AUTOSAR Classic</span></span>
+<span class="line"><span>   │                                  │</span></span>
+<span class="line"><span>   │  UDP：车辆发现 / 车辆识别         │</span></span>
+<span class="line"><span>   ├─────────────────────────────────>│</span></span>
+<span class="line"><span>   │&#x3C;─────────────────────────────────┤</span></span>
+<span class="line"><span>   │                                  │</span></span>
+<span class="line"><span>   │  TCP SYN → SYN/ACK → ACK         │</span></span>
+<span class="line"><span>   ├─────────────────────────────────>│</span></span>
+<span class="line"><span>   │&#x3C;─────────────────────────────────┤</span></span>
+<span class="line"><span>   │                                  │</span></span>
+<span class="line"><span>   │  DoIP Routing Activation         │</span></span>
+<span class="line"><span>   ├─────────────────────────────────>│</span></span>
+<span class="line"><span>   │&#x3C;─────────────────────────────────┤</span></span>
+<span class="line"><span>   │                                  │</span></span>
+<span class="line"><span>   │  UDS 10 01 → 50 01              │</span></span>
+<span class="line"><span>   ├─────────────────────────────────>│</span></span>
+<span class="line"><span>   │&#x3C;─────────────────────────────────┤</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>在 AUTOSAR Classic 的典型部署中，TcpIp 负责底层 Socket 与 TCP/IP 处理，SoAd 管理 Socket Connection 和 PDU 路由；DoIP 管理车辆识别、路由激活与诊断消息，诊断负载再经相关路由进入 Dcm。具体的 PduR 接入方式取决于工程配置。</p>
+<p><strong>UDP 发现成功只能证明相应 UDP 通路可工作，不等于 TCP Server 已经处于监听状态。</strong> 同理，DHCP 成功获取 IPv4 地址也只是 Listener 建立的必要环境条件之一。</p>
+<p>这次联调早期确实遇到过 IPv4 Controller 尚未进入可用状态的问题。恢复网络初始化后，UDP 服务已经可用，但 TCP SYN 仍触发 RST/ACK。两个现象发生在同一轮排查中，却属于不同层次，不宜合并为一个原因。</p>
+<h2>2. SoCon Open 不等于 TCP Listen</h2>
+<p>SoAd 不是在收到 SYN 时才临时创建监听端口。对需要自动或请求式打开的 TCP Server SoCon，它会在相应状态处理路径中准备监听资源。</p>
+<p>下面按实际调查过的函数关系整理主要步骤，省略了版本相关的事件队列、重试和可选参数分支：</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>SoAd_SoCon_RequestOpenSoCon</span></span>
+<span class="line"><span>           │</span></span>
+<span class="line"><span>           ▼</span></span>
+<span class="line"><span>SoAd_SoCon_HandleSoConStates</span></span>
+<span class="line"><span>           │</span></span>
+<span class="line"><span>           ▼</span></span>
+<span class="line"><span>SoAd_SoCon_CheckAndOpen</span></span>
+<span class="line"><span>           │</span></span>
+<span class="line"><span>           ▼</span></span>
+<span class="line"><span>SoAd_SoCon_Open</span></span>
+<span class="line"><span>           │</span></span>
+<span class="line"><span>           ▼</span></span>
+<span class="line"><span>SoAd_SoCon_OpenSocketTcpServer</span></span>
+<span class="line"><span>           │</span></span>
+<span class="line"><span>           ▼</span></span>
+<span class="line"><span>SoAd_SoCon_OpenSocketTcpServerGetAndListen</span></span>
+<span class="line"><span>           │</span></span>
+<span class="line"><span>           ├─ TcpIp_GetSocket</span></span>
+<span class="line"><span>           ├─ SoAd_SoCon_TcpChangeParameter</span></span>
+<span class="line"><span>           │       ├─ RX Window / 接收缓冲区</span></span>
+<span class="line"><span>           │       ├─ TX Buffer / 发送缓冲区</span></span>
+<span class="line"><span>           │       └─ 其他可选 TCP 参数</span></span>
+<span class="line"><span>           ├─ TcpIp_Bind</span></span>
+<span class="line"><span>           └─ TcpIp_TcpListen</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>这里有三个检查点：</p>
+<p><strong>第一，Open 请求与实际打开之间可能存在调度延迟。</strong> SoCon 状态变化由任务或事件处理推动；仅看到 Open 请求计数变化，不能断定 Listener 已经存在。</p>
+<p><strong>第二，GetSocket 只是取得一个 TcpIp Socket 资源。</strong> 它成功后，仍然可能因为参数设置、Bind 或 Listen 失败而关闭该资源。这次调试中，GetSocket 返回成功，但随后 <code>TcpChangeParameter</code> 返回失败；Bind 和 Listen 因此前置条件不满足而没有执行。</p>
+<p><strong>第三，不同模块的索引不能混看。</strong> <code>SoConId</code> 是配置中的连接标识，<code>SoConIdx</code> 是 SoAd 内部数组索引；SoAd 自己的 <code>SocketTcpIdx</code> 与 TcpIp 的 <code>SocketTcpDyn</code> 索引也属于不同的表。定位时应先核对各自的映射关系，不能仅凭数值相同认定是同一个对象。</p>
+<p>从 TCP 的角度看，Listener 和接入后形成的连接也不是一个概念。Listener 负责接受连接请求；已经建立的连接则具有独立的对端状态与资源管理。两者的实际 Buffer 占用方式需要看协议栈实现，不能仅按 SoConGroup 数量直接推算。</p>
+<h2>3. 固定 Buffer Pool：一块连续内存，多个 Descriptor</h2>
+<p>本案例所涉及的 TcpIp 实现采用<strong>构建时配置容量、运行时分配归属</strong>的方式管理 TCP RX/TX 缓冲区。</p>
+<p>数据内存可以是一块连续数组，描述符则通过起始和结束索引描述每个预配置片段：</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>Tcp RX Byte Array</span></span>
+<span class="line"><span>┌──────────────┬────────────────────────┬────────────────┐</span></span>
+<span class="line"><span>│ Descriptor 0 │      Descriptor 1      │ Descriptor 2   │</span></span>
+<span class="line"><span>└──────────────┴────────────────────────┴────────────────┘</span></span>
+<span class="line"><span>^              ^                        ^                ^</span></span>
+<span class="line"><span>Start[0]     End[0]                   End[1]           End[2]</span></span>
+<span class="line"><span>             =Start[1]                =Start[2]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Descriptor：{ StartIdx, EndIdx }</span></span>
+<span class="line"><span>Socket：保存已分配 Descriptor 的索引</span></span>
+<span class="line"><span>Descriptor 动态字段：保存当前 Socket 属主</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p>每段的范围通常采用左闭右开区间 <code>[StartIdx, EndIdx)</code>，因此：</p>
+<div class="language-text line-numbers-mode" data-highlighter="shiki" data-ext="text" style="--shiki-light:#0e1116;--shiki-dark:#f0f3f6;--shiki-light-bg:#ffffff;--shiki-dark-bg:#0a0c10"><pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast vp-code"><code class="language-text"><span class="line"><span>BufferLength = EndIdx - StartIdx</span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div></div></div><p>这样只需保存边界，不必为每个 Descriptor 重复保存 Length。它也便于在生成阶段核对各段是否重叠、是否超出底层数组边界。</p>
+<p>例如，下面这些值完全是<strong>教学示例</strong>：</p>
+<p>| Descriptor | StartIdx | EndIdx | 长度 |<br>
+|</p>
+]]></content:encoded>
+    </item>
     <item>
       <title>一条 ROS2 控制指令的执行路径：从消息到回调，再到控制时效</title>
       <link>https://binkyle.github.io/blog/Robotics/ros2-command-lifecycle.html</link>
